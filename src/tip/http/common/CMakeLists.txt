@@ -30,7 +30,7 @@ set_target_properties(
 target_link_libraries(${HTTP_COMMON_LIB} ${TIP_IRI_LIB})
 
 install (
-    TARGETS tip-http-common
+    TARGETS ${HTTP_COMMON_LIB}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
