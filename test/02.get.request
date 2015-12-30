@@ -1,0 +1,10 @@
+GET /ga.js?test=true HTTP/1.1
+Host: www.google-analytics.com
+Connection: keep-alive
+Accept: */*
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36
+Referer: http://www.cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html
+Accept-Encoding: gzip, deflate, sdch
+Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4
+If-Modified-Since: Thu, 09 Jul 2015 23:50:56 GMT
+

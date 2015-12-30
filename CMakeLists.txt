@@ -81,6 +81,11 @@ link_directories(${TIP_IRI_LIB_DIR} ${TIP_LOG_LIB_DIR})
 add_subdirectory(include/tip/http)
 add_subdirectory(src/tip/http)
 
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
 get_directory_property(has_parent PARENT_DIRECTORY)
 if (has_parent)
     set(HTTP_COMMON_LIB ${PROJECT_PREFIX}-http-common PARENT_SCOPE)
