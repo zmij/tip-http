@@ -12,7 +12,6 @@ if (NOT CMAKE_THREAD_LIBS_INIT)
     find_package(Threads REQUIRED)
 endif()
 
-message(STATUS ${TIP_IRI_INCLUDE_DIRS})
 include_directories(${GTEST_INCLUDE_DIRS} ${TIP_IRI_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 
 # Test requests
@@ -78,6 +77,7 @@ set(
 add_executable(test-http-common ${test_http_common_SRCS})
 target_link_libraries(test-http-common
     ${GTEST_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
     ${TIP_LOG_LIB}
     ${TIP_IRI_LIB}
     ${HTTP_COMMON_LIB}
@@ -97,6 +97,7 @@ add_executable(test-http-client ${client_test_SRCS})
 target_link_libraries(
     test-http-client
     ${GTEST_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
     ${TIP_LOG_LIB}
     ${TIP_IRI_LIB}
     ${HTTP_CLIENT_LIB}
@@ -120,6 +121,7 @@ set(
 add_executable(test-http-server ${server_test_SRCS})
 target_link_libraries(test-http-server
     ${GTEST_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
     ${HTTP_SERVER_LIB}
 )
 

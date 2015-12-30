@@ -18,19 +18,16 @@ endif()
 
 set(_pname ${PROJECT_PREFIX}-http)
 
-if (NOT TIP_IRI_INCLUDE_DIRS)
-    message(FATAL_ERROR "Please set path to tip-iri includes (-DTIP_IRI_INCLUDE_DIRS=)")
-    # TODO Fallback to subtree
+if (NOT TIP_LOG_INCLUDE_DIRS)
+    set(_TIP_LOG_SUBTREE ON)
 endif()
 
-if (NOT TIP_LOG_INCLUDE_DIRS)
-    message(FATAL_ERROR "Please set path to tip-log includes (-DTIP_LOG_INCLUDE_DIRS=)")
-    # TODO Fallback to subtree
+if (NOT TIP_IRI_INCLUDE_DIRS)
+    set(_TIP_IRI_SUBTREE ON)
 endif()
 
 if(NOT TIP_UTIL_INCLUDE_DIRS)
-    message(FATAL_ERROR "Please set tip utility include directories (-DTIP_UTIL_INCLUDE_DIRS=)")
-    # TODO Fallback to subtree
+    set(TIP_UTIL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/include)
 endif()
 
 if (NOT TIP_IRI_LIB)
@@ -55,6 +52,15 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/header_gen.cmake)
 
 add_definitions("-std=c++11")
 
+set(BOOST_COMPONENTS
+    system
+    thread
+    locale
+)
+
+find_package(Boost 1.58 COMPONENTS ${BOOST_COMPONENTS} REQUIRED)
+find_package(Threads REQUIRED)
+
 set(HTTP_COMMON_LIB ${PROJECT_PREFIX}-http-common)
 set(HTTP_CLIENT_LIB ${PROJECT_PREFIX}-http-client)
 set(HTTP_SERVER_LIB ${PROJECT_PREFIX}-http-server)
@@ -62,13 +68,12 @@ set(HTTP_SERVER_LIB ${PROJECT_PREFIX}-http-server)
 add_subdirectory(data)
 
 add_subdirectory(lib/ssl)
-
-set(BOOST_COMPONENTS
-    system
-    thread
-)
-
-find_package(Boost 1.58 COMPONENTS ${BOOST_COMPONENTS} REQUIRED)
+if(_TIP_LOG_SUBTREE)
+    add_subdirectory(lib/log)
+endif()
+if(_TIP_IRI_SUBTREE)
+    add_subdirectory(lib/iri)
+endif()
 
 set(CEREAL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/cereal/include)
 
