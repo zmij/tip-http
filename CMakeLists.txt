@@ -20,10 +20,17 @@ set(_pname ${PROJECT_PREFIX}-http)
 
 if (NOT TIP_IRI_INCLUDE_DIRS)
     message(FATAL_ERROR "Please set path to tip-iri includes (-DTIP_IRI_INCLUDE_DIRS=)")
+    # TODO Fallback to subtree
 endif()
 
 if (NOT TIP_LOG_INCLUDE_DIRS)
     message(FATAL_ERROR "Please set path to tip-log includes (-DTIP_LOG_INCLUDE_DIRS=)")
+    # TODO Fallback to subtree
+endif()
+
+if(NOT TIP_UTIL_INCLUDE_DIRS)
+    message(FATAL_ERROR "Please set tip utility include directories (-DTIP_UTIL_INCLUDE_DIRS=)")
+    # TODO Fallback to subtree
 endif()
 
 if (NOT TIP_IRI_LIB)
@@ -73,6 +80,7 @@ include_directories(
     ${TIP_IRI_INCLUDE_DIRS}
     ${TIP_LOG_INCLUDE_DIRS}
     ${TIP_SSL_INCLUDE_DIRS}
+    ${TIP_UTIL_INCLUDE_DIRS}
     ${CEREAL_INCLUDE_DIR}
 )
 
