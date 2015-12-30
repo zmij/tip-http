@@ -1,0 +1,15 @@
+POST /html/tryit_view.asp?x=0.6604728614911437 HTTP/1.1
+Host: www.w3schools.com
+Connection: keep-alive
+Content-Length: 891
+Cache-Control: max-age=0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+Origin: http://www.w3schools.com
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36
+Content-Type: application/x-www-form-urlencoded
+Referer: http://www.w3schools.com/html/tryit.asp?filename=tryhtml_form_submit
+Accept-Encoding: gzip, deflate
+Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4
+Cookie: _gat=1; __gads=ID=ebf44fa153ed23ab:T=1437147638:S=ALNI_Mar4QmVXzBCKbX0NdsKVEV9jOhyQg; _ga=GA1.2.1738858273.1437147637; ASPSESSIONIDQSBTRRDS=AHDCEOMDOBANOMKDMOFMEKLO
+
+code=%253C%2521DOCTYPE%2520html%253E%250A%253Chtml%253E%250A%253Cbody%253E%250A%250A%253Cform%2520actionw3equalsign%2522action_page.php%2522%253E%250AFirst%2520name%253A%253Cbr%253E%250A%253Cinput%2520typew3equalsign%2522text%2522%2520namew3equalsign%2522firstname%2522%2520valuew3equalsign%2522Mickey%2522%253E%250A%253Cbr%253E%250ALast%2520name%253A%253Cbr%253E%250A%253Cinput%2520typew3equalsign%2522text%2522%2520namew3equalsign%2522lastname%2522%2520valuew3equalsign%2522Mouse%2522%253E%250A%253Cbr%253E%253Cbr%253E%250A%253Cinput%2520typew3equalsign%2522submit%2522%2520valuew3equalsign%2522Submit%2522%253E%250A%253C%2Fform%253E%2520%250A%250A%253Cp%253EIf%2520you%2520click%2520%2522Submit%2522%252C%2520the%2520form-data%2520will%2520be%2520sent%2520to%2520a%2520page%2520called%2520%2522action_page.php%2522.%253C%2Fp%253E%250A%250A%253C%2Fbody%253E%250A%253C%2Fhtml%253E%250A&bt=1

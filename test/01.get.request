@@ -1,0 +1,10 @@
+GET /cmake/help/v3.0/manual/cmake-generators.7.html?test=true HTTP/1.1
+Host: www.cmake.org
+Connection: keep-alive
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36
+Referer: http://www.cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html
+Accept-Encoding: gzip, deflate, sdch
+Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4
+Cookie: PHPSESSID=9fgu2du902506raeo81j2gl9l5; __utma=156426281.148512978.1436351299.1437117797.1437129459.6; __utmc=156426281; __utmz=156426281.1437129459.6.2.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided)
+

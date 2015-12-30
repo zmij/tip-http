@@ -1,0 +1,9 @@
+GET /r/__utm.gif?utmwv=5.6.5&utms=1&utmn=1697711428&utmhn=www.cmake.org&utmcs=UTF-8&utmsr=1920x1080&utmvp=1905x971&utmsc=24-bit&utmul=en-us&utmje=1&utmfl=18.0%20r0&utmdt=cmake-generators(7)%20%E2%80%94%20CMake%203.0.2%20Documentation&utmhid=249994528&utmr=0&utmp=%2Fcmake%2Fhelp%2Fv3.0%2Fmanual%2Fcmake-generators.7.html&utmht=1437147030960&utmac=UA-6042509-4&utmcc=__utma%3D156426281.148512978.1436351299.1437129459.1437147031.7%3B%2B__utmz%3D156426281.1437129459.6.2.utmcsr%3Dgoogle%7Cutmccn%3D(organic)%7Cutmcmd%3Dorganic%7Cutmctr%3D(not%2520provided)%3B&utmjid=1909732178&utmredir=1&utmu=DAAAAAAAAAAAAAAAAAAAAAAE~ HTTP/1.1
+Host: www.google-analytics.com
+Connection: keep-alive
+Accept: image/webp,*/*;q=0.8
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.134 Safari/537.36
+Referer: http://www.cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html
+Accept-Encoding: gzip, deflate, sdch
+Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4
+
