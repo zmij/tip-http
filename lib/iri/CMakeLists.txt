@@ -50,6 +50,13 @@ get_directory_property(has_parent PARENT_DIRECTORY)
 
 if (has_parent)
     set(TIP_IRI_LIB ${PROJECT_PREFIX}-iri PARENT_SCOPE)
-    set(TIP_IRI_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+    if(NOT BUILD_TESTS)
+        set(TIP_IRI_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+    else()
+        set(TIP_IRI_INCLUDE_DIRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/test
+        PARENT_SCOPE)
+    endif()
 endif()
 
