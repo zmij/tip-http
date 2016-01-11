@@ -101,14 +101,15 @@ endif()
 
 get_directory_property(has_parent PARENT_DIRECTORY)
 if (has_parent)
-    set(HTTP_COMMON_LIB ${PROJECT_PREFIX}-http-common PARENT_SCOPE)
-    set(HTTP_CLIENT_LIB ${PROJECT_PREFIX}-http-client PARENT_SCOPE)
-    set(HTTP_SERVER_LIB ${PROJECT_PREFIX}-http-server PARENT_SCOPE)
+    set(TIP_HTTP_COMMON_LIB ${HTTP_COMMON_LIB} CACHE INTERNAL "HTTP common library target name")
+    set(TIP_HTTP_CLIENT_LIB ${HTTP_CLIENT_LIB} CACHE INTERNAL "HTTP client library target name")
+    set(TIP_HTTP_SERVER_LIB ${HTTP_SERVER_LIB} CACHE INTERNAL "HTTP server library target name")
+    set(CEREAL_INCLUDE_DIR ${CEREAL_INCLUDE_DIR} CACHE INTERNAL "Cereal include directories")
     set(
-        TIP_HTTP_INCLIDE_DIRS 
+        TIP_HTTP_INCLUDE_DIRS 
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${CEREAL_INCLUDE_DIR}
-        PARENT_SCOPE
+        CACHE INTERNAL "HTTP include directories"
     )
 endif()
