@@ -29,7 +29,7 @@ namespace tip {
 namespace http {
 namespace client {
 
-LOCAL_LOGGING_FACILITY(HTTPSSN, OFF);
+LOCAL_LOGGING_FACILITY(HTTPSSN, TRACE);
 
 struct tcp_transport {
 	typedef boost::asio::io_service io_service;
@@ -148,10 +148,21 @@ struct ssl_transport {
 	    X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
 	    X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
 	    local_log() << "Verifying " << subject_name;
-	    return preverified;
+	    return true;
 	}
 	void
 	handle_connect(error_code const& ec, connect_callback cb)
+	{
+		if (!ec) {
+			socket_.async_handshake(boost::asio::ssl::stream_base::client,
+				std::bind(&ssl_transport::handle_handshake, this,
+					std::placeholders::_1, cb));
+		} else if (cb) {
+			cb(ec);
+		}
+	}
+	void
+	handle_handshake(error_code const& ec, connect_callback cb)
 	{
 		if (cb) {
 			cb(ec);
