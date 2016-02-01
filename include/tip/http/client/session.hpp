@@ -31,18 +31,19 @@ public:
 	typedef boost::asio::io_service io_service;
 	typedef std::vector<char> body_type;
 	typedef std::function< void(request_ptr, response_ptr) > response_callback;
+	typedef std::function< void(std::exception_ptr) > error_callback;
 	typedef std::function< void(session_ptr) > session_callback;
 public:
 	virtual ~session();
 
 	void
 	send_request(request_method method, request::iri_type const&,
-			body_type const&, response_callback cb);
+			body_type const&, response_callback cb, error_callback ecb);
 	void
 	send_request(request_method method, request::iri_type const&,
-			body_type&&, response_callback cb);
+			body_type&&, response_callback cb, error_callback ecb);
 	void
-	send_request(request_ptr req, response_callback cb);
+	send_request(request_ptr req, response_callback cb, error_callback ecb);
 
 	void
 	close();
@@ -55,12 +56,12 @@ protected:
 
 	virtual void
 	do_send_request(request_method method, request::iri_type const&,
-			body_type const&, response_callback cb) = 0;
+			body_type const&, response_callback cb, error_callback) = 0;
 	virtual void
 	do_send_request(request_method method, request::iri_type const&,
-			body_type&&, response_callback cb) = 0;
+			body_type&&, response_callback cb, error_callback) = 0;
 	virtual void
-	do_send_request(request_ptr req, response_callback cb) = 0;
+	do_send_request(request_ptr req, response_callback cb, error_callback) = 0;
 
 	virtual void
 	do_close() = 0;

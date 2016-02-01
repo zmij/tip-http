@@ -6,6 +6,7 @@
  */
 
 #include <tip/http/client/session.hpp>
+#include <tip/http/client/errors.hpp>
 
 #include <tip/http/common/request.hpp>
 #include <tip/http/common/response.hpp>
@@ -35,13 +36,14 @@ struct tcp_transport {
 	typedef boost::asio::io_service io_service;
 	typedef boost::asio::ip::tcp tcp;
 	typedef boost::system::error_code error_code;
-	typedef std::function<void(error_code const&)> connect_callback;
+	typedef std::function<void(::std::exception_ptr)> connect_callback;
 	typedef tcp::socket socket_type;
 
 	tcp::resolver resolver_;
 	socket_type socket_;
 
-	tcp_transport(io_service& io_service, request::iri_type const& iri, connect_callback cb) :
+	tcp_transport(io_service& io_service, request::iri_type const& iri,
+			connect_callback cb) :
 			resolver_(io_service), socket_(io_service)
 	{
 		std::string host = static_cast<std::string const&>(iri.authority.host);
@@ -66,7 +68,7 @@ struct tcp_transport {
 					std::placeholders::_1, cb
 			));
 		} else if (cb) {
-			cb(ec);
+			cb(::std::make_exception_ptr( errors::resolve_failed(ec.message()) ));
 		}
 	}
 
@@ -74,7 +76,11 @@ struct tcp_transport {
 	handle_connect(error_code const& ec, connect_callback cb)
 	{
 		if (cb) {
-			cb(ec);
+			if (!ec) {
+				cb(nullptr);
+			} else {
+				cb(::std::make_exception_ptr( errors::connection_refused(ec.message()) ));
+			}
 		}
 	}
 	void
@@ -90,7 +96,7 @@ struct ssl_transport {
 	typedef boost::asio::io_service io_service;
 	typedef boost::asio::ip::tcp tcp;
 	typedef boost::system::error_code error_code;
-	typedef std::function<void(error_code const&)> connect_callback;
+	typedef std::function<void(::std::exception_ptr)> connect_callback;
 	typedef boost::asio::ssl::stream< tcp::socket > socket_type;
 
 	tcp::resolver resolver_;
@@ -129,7 +135,7 @@ struct ssl_transport {
 					std::placeholders::_1, cb
 			));
 		} else if (cb) {
-			cb(ec);
+			cb(::std::make_exception_ptr( errors::resolve_failed(ec.message()) ));
 		}
 	}
 
@@ -158,14 +164,18 @@ struct ssl_transport {
 				std::bind(&ssl_transport::handle_handshake, this,
 					std::placeholders::_1, cb));
 		} else if (cb) {
-			cb(ec);
+			cb(::std::make_exception_ptr( errors::connection_refused(ec.message()) ));
 		}
 	}
 	void
 	handle_handshake(error_code const& ec, connect_callback cb)
 	{
 		if (cb) {
-			cb(ec);
+			if (!ec) {
+				cb(nullptr);
+			} else {
+				cb(::std::make_exception_ptr( errors::ssl_handshake_failed(ec.message()) ));
+			}
 		}
 	}
 	void
@@ -180,10 +190,13 @@ struct ssl_transport {
 namespace events {
 struct connected {};
 struct disconnect {};
-struct transport_error {};
+struct transport_error {
+	std::exception_ptr error;
+};
 struct request {
 	http::request_ptr request_;
-	session::response_callback callback_;
+	session::response_callback success_;
+	session::error_callback	fail_;
 };
 struct response {
 	http::response_ptr response_;
@@ -222,7 +235,7 @@ struct session_fsm_ :
 		void
 		on_exit(events::transport_error const&, session_fsm& fsm)
 		{
-			fsm.get_deferred_queue().clear();
+			//fsm.get_deferred_queue().clear();
 		}
 		template < typename Event >
 		void
@@ -297,8 +310,8 @@ struct session_fsm_ :
 			operator()(events::response const& resp, FSM&, wait_response& resp_state,
 					TargetState&)
 			{
-				if (resp_state.req_.callback_) {
-					resp_state.req_.callback_(resp_state.req_.request_, resp.response_);
+				if (resp_state.req_.success_) {
+					resp_state.req_.success_(resp_state.req_.request_, resp.response_);
 				}
 				resp_state.req_ = events::request{};
 			}
@@ -315,6 +328,39 @@ struct session_fsm_ :
 		session_fsm* session_;
 	};
 	typedef boost::msm::back::state_machine< online_ > online;
+
+	struct connection_failed : boost::msm::front::state<> {
+		void
+		on_entry(events::transport_error const& evt, session_fsm& fsm)
+		{
+			local_log() << "entering connection failed";
+			error = evt.error;
+		}
+		template< typename Event >
+		void
+		on_exit(Event const&, session_fsm& fsm)
+		{
+			local_log() << "exiting connection failed";
+			error = nullptr;
+		}
+		::std::exception_ptr error;
+
+		struct notify_request_failure {
+			void
+			operator()(events::request const& req, session_fsm&,
+					connection_failed& state, connection_failed&)
+			{
+				local_log() << "Notify that request failed";
+				if (req.fail_) {
+					req.fail_(state.error);
+				}
+			}
+		};
+		struct internal_transition_table : ::boost::mpl::vector<
+			Internal< events::request, notify_request_failure, none >
+		> {};
+	};
+
 	struct terminated : boost::msm::front::terminate_state<> {
 		template < typename Event >
 		void
@@ -343,11 +389,15 @@ struct session_fsm_ :
 		/*  +-----------------+-----------------------+---------------+---------------------------+---------------------+ */
 		Row <	unplugged,		events::connected,		online,			none,						none				>,
 		Row <	unplugged,		events::
-									transport_error,	terminated,		none,						none				>,
+									transport_error,	connection_failed,
+																		none,						none				>,
+		Row <	online,			events::
+									transport_error,	connection_failed,
+																		none,						none				>,
 		Row <	unplugged,		events::disconnect,		terminated,		none,						none				>,
 		Row <	online,			events::disconnect,		terminated,		disconnect_transport,		none				>,
-		Row <	online,			events::
-									transport_error,	terminated,		none,						none				>
+		Row <	connection_failed,
+								events::disconnect,		terminated,		none,						none				>
 	>{};
 
 	template < typename Event, typename FSM >
@@ -380,16 +430,22 @@ struct session_fsm_ :
 	virtual ~session_fsm_() {}
 
 	void
-	handle_connect(boost::system::error_code const& ec)
+	handle_connect(::std::exception_ptr ex)
 	{
-		if (!ec) {
+		if (!ex) {
 			local_log(logger::DEBUG) << "Connected to "
 					<< scheme_ << "://" << host_;
 			fsm().process_event(events::connected{});
 		} else {
-			local_log(logger::ERROR) << "Error connecting to "
-					<< scheme_ << "://" << host_ << ": " << ec.message();
-			fsm().process_event(events::transport_error{});
+			try {
+				::std::rethrow_exception(ex);
+			} catch (std::exception const& e) {
+				local_log(logger::ERROR) << "Error connecting to "
+						<< scheme_ << "://" << host_ << ": " << e.what();
+				fsm().process_event(events::transport_error{
+					::std::current_exception()
+				});
+			}
 		}
 	}
 
@@ -423,7 +479,9 @@ struct session_fsm_ :
 				strand_.wrap(std::bind(&shared_type::handle_read_headers,
 						shared_base::shared_from_this(), _1, _2)));
 		} else {
-			fsm().process_event(events::transport_error());
+			fsm().process_event(events::transport_error{
+				::std::make_exception_ptr(errors::http_client_error{ec.message()})
+			});
 		}
 	}
 	void
@@ -439,7 +497,9 @@ struct session_fsm_ :
 				local_log(logger::ERROR) << "Failed to parse response headers";
 			}
 		} else {
-			fsm().process_event(events::transport_error());
+			fsm().process_event(events::transport_error{
+				::std::make_exception_ptr(errors::http_client_error{ec.message()})
+			});
 		}
 	}
 
@@ -478,7 +538,9 @@ struct session_fsm_ :
 			std::istream is(&incoming_);
 			read_body(resp, cb(is));
 		} else {
-			fsm().process_event(events::transport_error());
+			fsm().process_event(events::transport_error{
+				::std::make_exception_ptr(errors::http_client_error{ec.message()})
+			});
 		}
 	}
 
@@ -537,23 +599,23 @@ public:
 		local_log() << "session_impl::~session_impl";
 	}
 
-	virtual void
+	void
 	do_send_request(request_method method, request::iri_type const& iri,
-			body_type const& body, response_callback cb)
+			body_type const& body, response_callback cb, error_callback ecb) override
 	{
-		do_send_request( request::create(method, iri, body), cb );
+		do_send_request( request::create(method, iri, body), cb, ecb );
 	}
 
-	virtual void
+	void
 	do_send_request(request_method method, request::iri_type const& iri,
-			body_type&& body, response_callback cb)
+			body_type&& body, response_callback cb, error_callback ecb) override
 	{
-		do_send_request( request::create(method, iri, std::move(body)), cb );
+		do_send_request( request::create(method, iri, std::move(body)), cb, ecb );
 	}
-	virtual void
-	do_send_request(request_ptr req, response_callback cb)
+	void
+	do_send_request(request_ptr req, response_callback cb, error_callback ecb) override
 	{
-		base_type::process_event( events::request{ req, cb });
+		base_type::process_event( events::request{ req, cb, ecb });
 	}
 	virtual void
 	do_close()
@@ -573,22 +635,22 @@ session::~session()
 
 void
 session::send_request(request_method method, request::iri_type const& iri,
-		body_type const& body, response_callback cb)
+		body_type const& body, response_callback cb, error_callback ecb)
 {
-	do_send_request(method, iri, body, cb);
+	do_send_request(method, iri, body, cb, ecb);
 }
 
 void
 session::send_request(request_method method, request::iri_type const& iri,
-		body_type&& body, response_callback cb)
+		body_type&& body, response_callback cb, error_callback ecb)
 {
-	do_send_request(method, iri, std::move(body), cb);
+	do_send_request(method, iri, std::move(body), cb, ecb);
 }
 
 void
-session::send_request(request_ptr req, response_callback cb)
+session::send_request(request_ptr req, response_callback cb, error_callback ecb)
 {
-	do_send_request(req, cb);
+	do_send_request(req, cb, ecb);
 }
 
 void

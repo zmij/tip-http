@@ -19,6 +19,7 @@ namespace http {
 class response;
 typedef std::shared_ptr< response > response_ptr;
 typedef std::function< void(response_ptr) > response_callback;
+typedef std::function< void(std::exception_ptr) > error_callback;
 
 namespace client {
 
@@ -37,11 +38,13 @@ public:
 	set_defaults(headers const& h);
 
 	void
-	get(std::string const& url, response_callback);
+	get(std::string const& url, response_callback, error_callback = nullptr);
 	void
-	post(std::string const& url, body_type const& body, response_callback);
+	post(std::string const& url, body_type const& body, response_callback,
+			error_callback = nullptr);
 	void
-	post(std::string const& url, body_type&& body, response_callback);
+	post(std::string const& url, body_type&& body, response_callback,
+			error_callback = nullptr);
 private:
 	virtual void
 	shutdown_service();

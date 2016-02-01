@@ -26,13 +26,18 @@ TEST(HttpClient, GetRequest)
 	boost::asio::io_service io_service;
 	http_service& svc = boost::asio::use_service< http_service >(io_service);
 	response_ptr resp;
+	bool error = false;
 	svc.get("http://google.com/",
 	[&](response_ptr r){
 		local_log() << "Received a response: Content-Length: "
 				<< r->content_length() << " body size " << r->body_.size();
 		resp = r;
+	},
+	[&](std::exception_ptr) {
+		error = true;
 	});
 	io_service.run();
+	EXPECT_FALSE(error);
 	ASSERT_TRUE(resp.get());
 	EXPECT_LT(0, resp->body_.size());
 }
@@ -44,14 +49,19 @@ TEST(HttpClient, FailConnecting)
 	boost::asio::io_service io_service;
 	http_service& svc = boost::asio::use_service< http_service >(io_service);
 	response_ptr resp;
+	bool error = false;
 	svc.get("http://127.0.0.1:65535/",
 	[&](response_ptr r){
 		local_log() << "Received a response: Content-Length: "
 				<< r->content_length() << " body size " << r->body_.size();
 		resp = r;
+	},
+	[&](std::exception_ptr) {
+			error = true;
 	});
 	io_service.run();
-	ASSERT_FALSE(resp.get());
+	EXPECT_FALSE(resp.get());
+	EXPECT_TRUE(error);
 }
 
 
@@ -62,14 +72,19 @@ TEST(HttpsClient, FailVerifyCert)
 	boost::asio::io_service io_service;
 	http_service& svc = boost::asio::use_service< http_service >(io_service);
 	response_ptr resp;
+	bool error = false;
 	svc.get("https://mail.ru/",
 	[&](response_ptr r){
 		local_log() << "Received a response: Content-Length: "
 				<< r->content_length() << " body size " << r->body_.size();
 		resp = r;
+	},
+	[&](std::exception_ptr) {
+			error = true;
 	});
 	io_service.run();
-	ASSERT_FALSE(resp.get());
+	EXPECT_FALSE(resp.get());
+	EXPECT_TRUE(error);
 }
 
 TEST(HttpsClient, VerifyCertOK)
@@ -83,12 +98,17 @@ TEST(HttpsClient, VerifyCertOK)
 	ssl_svc.context().set_default_verify_paths();
 	http_service& svc = boost::asio::use_service< http_service >(io_service);
 	response_ptr resp;
+	bool error = false;
 	svc.get("https://mail.ru/",
 	[&](response_ptr r){
 		local_log() << "Received a response: Content-Length: "
 				<< r->content_length() << " body size " << r->body_.size();
 		resp = r;
+	},
+	[&](std::exception_ptr) {
+			error = true;
 	});
 	io_service.run();
-	ASSERT_TRUE(resp.get());
+	EXPECT_TRUE(resp.get());
+	EXPECT_FALSE(error);
 }
