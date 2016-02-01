@@ -36,6 +36,7 @@ target_link_libraries(${HTTP_SERVER_LIB}
     ${Boost_THREAD_LIBRARIES}
     ${Boost_LOCALE_LIBRARIES}
     ${TIP_LOG_LIB}
+    ${TIP_SSLCONTEXT_LIB}
     ${HTTP_COMMON_LIB}
 )
 
