@@ -6,6 +6,8 @@
  */
 
 #include <tip/http/server/server.hpp>
+#include <tip/ssl_context_service.hpp>
+
 #include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -87,6 +89,9 @@ void server::run()
 		std::shared_ptr< std::thread > thread(
 		new std::thread([&](){
 			try {
+				typedef tip::ssl::ssl_context_service ssl_service;
+				ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(*io_service_);
+				ssl_svc.context().set_default_verify_paths();
 				io_service_->run();
 			} catch (std::exception const& e) {
 				local_log(logger::ERROR) << "Uncaught exception " << e.what();
