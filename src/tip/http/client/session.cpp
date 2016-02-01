@@ -148,7 +148,7 @@ struct ssl_transport {
 	    X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
 	    X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
 	    local_log() << "Verifying " << subject_name;
-	    return true;
+	    return preverified;
 	}
 	void
 	handle_connect(error_code const& ec, connect_callback cb)
@@ -171,7 +171,8 @@ struct ssl_transport {
 	void
 	disconnect()
 	{
-		socket_.shutdown();
+		if (socket_.lowest_layer().is_open())
+			socket_.lowest_layer().close();
 	}
 };
 
@@ -218,6 +219,17 @@ struct session_fsm_ :
 		typedef boost::mpl::vector<
 			events::request
 		> deferred_events;
+		void
+		on_exit(events::transport_error const&, session_fsm& fsm)
+		{
+			fsm.get_deferred_queue().clear();
+		}
+		template < typename Event >
+		void
+		on_exit(Event const&, session_fsm& fsm)
+		{
+
+		}
 	};
 	struct online_ : public boost::msm::front::state_machine_def<online_> {
 		typedef boost::msm::back::state_machine< online_ > online;
@@ -345,6 +357,13 @@ struct session_fsm_ :
 		local_log(logger::DEBUG) << "No transition from state " << state
 				<< " on event " << typeid(e).name() << " (in transaction)";
 	}
+    template <class FSM,class Event>
+    void exception_caught (Event const& evt, FSM& , std::exception& ex )
+    {
+        local_log(logger::DEBUG) << "Exception caught on event "
+        		<< typeid(evt).name() << " " << typeid(ex).name()
+				<< ": " << ex.what();
+    }
 	//@}
 	session_fsm_(io_service& io_service, request::iri_type const& iri,
 			session::session_callback on_close, headers const& default_headers) :
@@ -366,11 +385,11 @@ struct session_fsm_ :
 		if (!ec) {
 			local_log(logger::DEBUG) << "Connected to "
 					<< scheme_ << "://" << host_;
-			fsm().process_event(events::connected());
+			fsm().process_event(events::connected{});
 		} else {
 			local_log(logger::ERROR) << "Error connecting to "
-					<< scheme_ << "://" << host_;
-			fsm().process_event(events::transport_error());
+					<< scheme_ << "://" << host_ << ": " << ec.message();
+			fsm().process_event(events::transport_error{});
 		}
 	}
 

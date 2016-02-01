@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <tip/http/client/service.hpp>
 #include <tip/http/common/response.hpp>
+#include <tip/ssl_context_service.hpp>
 #include <tip/log.hpp>
 
 LOCAL_LOGGING_FACILITY(CLIENTTEST, TRACE);
@@ -24,9 +25,70 @@ TEST(HttpClient, GetRequest)
 	using tip::http::response_ptr;
 	boost::asio::io_service io_service;
 	http_service& svc = boost::asio::use_service< http_service >(io_service);
-	svc.get("http://google.com/", [](response_ptr r){
+	response_ptr resp;
+	svc.get("http://google.com/",
+	[&](response_ptr r){
 		local_log() << "Received a response: Content-Length: "
 				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
 	});
 	io_service.run();
+	ASSERT_TRUE(resp.get());
+	EXPECT_LT(0, resp->body_.size());
+}
+
+TEST(HttpClient, FailConnecting)
+{
+	typedef tip::http::client::service http_service;
+	using tip::http::response_ptr;
+	boost::asio::io_service io_service;
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
+	response_ptr resp;
+	svc.get("http://127.0.0.1:65535/",
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
+				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
+	});
+	io_service.run();
+	ASSERT_FALSE(resp.get());
+}
+
+
+TEST(HttpsClient, FailVerifyCert)
+{
+	typedef tip::http::client::service http_service;
+	using tip::http::response_ptr;
+	boost::asio::io_service io_service;
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
+	response_ptr resp;
+	svc.get("https://mail.ru/",
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
+				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
+	});
+	io_service.run();
+	ASSERT_FALSE(resp.get());
+}
+
+TEST(HttpsClient, VerifyCertOK)
+{
+	typedef tip::http::client::service http_service;
+	typedef tip::ssl::ssl_context_service ssl_service;
+
+	using tip::http::response_ptr;
+	boost::asio::io_service io_service;
+	ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(io_service);
+	ssl_svc.context().set_default_verify_paths();
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
+	response_ptr resp;
+	svc.get("https://mail.ru/",
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
+				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
+	});
+	io_service.run();
+	ASSERT_TRUE(resp.get());
 }
