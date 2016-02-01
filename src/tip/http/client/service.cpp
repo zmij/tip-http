@@ -12,6 +12,7 @@
 #include <map>
 
 #include <tip/http/client/session.hpp>
+#include <tip/http/client/errors.hpp>
 #include <tip/http/common/response.hpp>
 
 namespace tip {
@@ -51,56 +52,65 @@ struct service::impl : std::enable_shared_from_this<impl> {
 	}
 
 	void
-	get(std::string const& url, response_callback cb)
+	get(std::string const& url, response_callback cb, error_callback ecb)
 	{
 		request::iri_type iri;
 		if (!request::parse_iri(url, iri)) {
-			// TODO Throw an error - invalid IRI
-			return;
+			try {
+				throw errors::http_client_error("Invalid IRI");
+			} catch (std::exception const& e) {
+				if (ecb) {
+					ecb(std::current_exception());
+				} else throw;
+			}
 		}
-		send_request(GET, iri, session::body_type(), cb);
+		send_request(GET, iri, session::body_type(), cb, ecb);
 	}
 	void
-	post(std::string const& url, body_type const& body, response_callback cb)
+	post(std::string const& url, body_type const& body,
+			response_callback cb, error_callback ecb)
 	{
 		request::iri_type iri;
 		if (!request::parse_iri(url, iri)) {
 			return;
 		}
-		send_request(POST, iri, body, cb);
+		send_request(POST, iri, body, cb, ecb);
 	}
 	void
-	post(std::string const& url, body_type&& body, response_callback cb)
+	post(std::string const& url, body_type&& body,
+			response_callback cb, error_callback ecb)
 	{
 		request::iri_type iri;
 		if (!request::parse_iri(url, iri)) {
 			return;
 		}
-		send_request(POST, iri, std::move(body), cb);
+		send_request(POST, iri, std::move(body), cb, ecb);
 	}
 
 
 	void
 	send_request(request_method method, request::iri_type const& iri,
-			session::body_type const& body, response_callback cb)
+			session::body_type const& body,
+			response_callback cb, error_callback ecb)
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
 		session_ptr s = get_session(iri);
 		s->send_request(GET, iri, body,
 				std::bind(&impl::handle_response,
-						shared_from_this(), _1, _2, cb));
+						shared_from_this(), _1, _2, cb, ecb), ecb);
 	}
 	void
 	send_request(request_method method, request::iri_type const& iri,
-			session::body_type&& body, response_callback cb)
+			session::body_type&& body,
+			response_callback cb, error_callback ecb)
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
 		session_ptr s = get_session(iri);
 		s->send_request(GET, iri, std::move(body),
 				std::bind(&impl::handle_response,
-						shared_from_this(), _1, _2, cb));
+						shared_from_this(), _1, _2, cb, ecb), ecb);
 	}
 
 	session_ptr
@@ -140,7 +150,8 @@ struct service::impl : std::enable_shared_from_this<impl> {
 	}
 
 	void
-	handle_response(request_ptr req, response_ptr resp, response_callback cb)
+	handle_response(request_ptr req, response_ptr resp, response_callback cb,
+			error_callback ecb)
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
@@ -162,7 +173,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
 
 					session_ptr s = get_session(iri);
 					s->send_request(req, std::bind(
-							&impl::handle_response, this, _1, _2, cb ));
+							&impl::handle_response, this, _1, _2, cb, ecb), ecb);
 				}
 			} else {
 				local_log(logger::WARNING) << "Request redirected, but no Location header set";
@@ -227,19 +238,21 @@ service::shutdown_service()
 }
 
 void
-service::get(std::string const& url, response_callback cb)
+service::get(std::string const& url, response_callback cb, error_callback eb)
 {
-	pimpl_->get(url, cb);
+	pimpl_->get(url, cb, eb);
 }
 void
-service::post(std::string const& url, body_type const& body, response_callback cb)
+service::post(std::string const& url, body_type const& body,
+		response_callback cb, error_callback eb)
 {
-	pimpl_->post(url, body, cb);
+	pimpl_->post(url, body, cb, eb);
 }
 void
-service::post(std::string const& url, body_type&& body, response_callback cb)
+service::post(std::string const& url, body_type&& body,
+		response_callback cb, error_callback eb)
 {
-	pimpl_->post(url, std::move(body), cb);
+	pimpl_->post(url, std::move(body), cb, eb);
 }
 
 } /* namespace client */
