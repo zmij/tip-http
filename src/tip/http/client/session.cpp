@@ -213,6 +213,7 @@ struct session_fsm_ :
 	typedef boost::msm::back::state_machine< session_fsm_< transport_type, shared_type > > session_fsm;
 	typedef boost::asio::io_service io_service;
 	typedef boost::asio::streambuf buffer_type;
+	typedef std::shared_ptr< buffer_type >	buffer_ptr;
 	typedef std::vector< boost::asio::const_buffer > output_buffers_type;
 	typedef boost::system::error_code error_code;
 	//@{
@@ -472,22 +473,23 @@ struct session_fsm_ :
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
-		std::ostream os(&outgoing_);
+		buffer_ptr outgoing = std::make_shared<buffer_type>();
+		std::ostream os(outgoing.get());
 		os << req;
 		if (!default_headers_.empty()) {
 			os << default_headers_;
 		}
 		os << "\r\n";
 		output_buffers_type buffers;
-		buffers.push_back(boost::asio::buffer(outgoing_.data()));
+		buffers.push_back(boost::asio::buffer(outgoing->data()));
 		buffers.push_back(boost::asio::buffer(req.body_));
 		boost::asio::async_write(transport_.socket_, buffers,
 			strand_.wrap(std::bind(&shared_type::handle_write,
-						shared_base::shared_from_this(), _1, _2)));
+						shared_base::shared_from_this(), _1, _2, outgoing)));
 	}
 
 	void
-	handle_write(error_code const& ec, size_t bytes_transferred)
+	handle_write(error_code const& ec, size_t bytes_transferred, buffer_ptr b)
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
@@ -592,7 +594,6 @@ private:
 	iri::host						host_;
 	iri::scheme						scheme_;
 	buffer_type						incoming_;
-	buffer_type						outgoing_;
 	headers							default_headers_;
 	session::session_callback		on_close_;
 };
