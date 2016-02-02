@@ -95,10 +95,16 @@ struct service::impl : std::enable_shared_from_this<impl> {
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
-		session_ptr s = get_session(iri);
-		s->send_request(GET, iri, body,
-				std::bind(&impl::handle_response,
-						shared_from_this(), _1, _2, cb, ecb), ecb);
+		try {
+			session_ptr s = get_session(iri);
+			s->send_request(GET, iri, body,
+					std::bind(&impl::handle_response,
+							shared_from_this(), _1, _2, cb, ecb), ecb);
+		} catch (...) {
+			if (ecb) {
+				ecb(std::current_exception());
+			} else throw;
+		}
 	}
 	void
 	send_request(request_method method, request::iri_type const& iri,
@@ -107,10 +113,16 @@ struct service::impl : std::enable_shared_from_this<impl> {
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
-		session_ptr s = get_session(iri);
-		s->send_request(GET, iri, std::move(body),
-				std::bind(&impl::handle_response,
-						shared_from_this(), _1, _2, cb, ecb), ecb);
+		try {
+			session_ptr s = get_session(iri);
+			s->send_request(GET, iri, std::move(body),
+					std::bind(&impl::handle_response,
+							shared_from_this(), _1, _2, cb, ecb), ecb);
+		} catch (...) {
+			if (ecb) {
+				ecb(std::current_exception());
+			} else throw;
+		}
 	}
 
 	session_ptr
