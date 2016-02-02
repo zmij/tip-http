@@ -311,7 +311,16 @@ struct session_fsm_ :
 					TargetState&)
 			{
 				if (resp_state.req_.success_) {
-					resp_state.req_.success_(resp_state.req_.request_, resp.response_);
+					try {
+						resp_state.req_.success_(resp_state.req_.request_, resp.response_);
+					} catch (std::exception const& e) {
+						local_log(logger::ERROR)
+								<< "Response handler throwed an exception: "
+								<< e.what();
+					} catch (...) {
+						local_log(logger::ERROR)
+								<< "Response handler throwed an unexpected exception";
+					}
 				}
 				resp_state.req_ = events::request{};
 			}
@@ -352,7 +361,16 @@ struct session_fsm_ :
 			{
 				local_log() << "Notify that request failed";
 				if (req.fail_) {
-					req.fail_(state.error);
+					try {
+						req.fail_(state.error);
+					} catch (std::exception const& e) {
+						local_log(logger::ERROR)
+								<< "Error handler throwed an exception: "
+								<< e.what();
+					} catch (...) {
+						local_log(logger::ERROR)
+								<< "Error handler throwed an unexpected exception";
+					}
 				}
 			}
 		};
