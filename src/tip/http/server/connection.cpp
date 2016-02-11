@@ -113,6 +113,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 		}
 	} else if (!res.result) {
 		// fail read
+		local_log(logger::WARNING) << "Failed to read request body";
 		send_error(response_status::bad_request);
 	} else if (res.callback) {
 		boost::asio::async_read(socket_, incoming_,
