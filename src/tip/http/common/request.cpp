@@ -99,19 +99,15 @@ request::read_body_content_length(std::istream& is, size_t remain)
 {
 	if (remain == 0) {
 		// Don't need more data
-		return read_result_type{true, read_callback()};
+		return read_result_type{true, read_callback{}};
 	}
 	is.unsetf(std::ios_base::skipws);
 	std::istream_iterator<char> f(is);
 	std::istream_iterator<char> l;
 	size_t consumed = util::copy_max(f, l, remain, std::back_inserter(body_));
-	if (consumed == 0) {
-		// Failed to read anything
-		return read_result_type{false, read_callback()};
-	}
 	if (consumed == remain) {
 		// Don't need more data
-		return read_result_type{true, read_callback()};
+		return read_result_type{true, read_callback{}};
 	}
 
 	return read_result_type{boost::indeterminate,
