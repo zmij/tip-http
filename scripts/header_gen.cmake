@@ -31,15 +31,19 @@ endfunction()
 function(generate_http_header_parser_generator INFILE)
     add_custom_command(
         OUTPUT header_names_parser.cpp
-        DEPENDS filtered_headers ${GEN_HEADER_PARSER}
+        DEPENDS filtered_headers ${GEN_HEADER_PARSER} ${INFILE}
         COMMENT "Generate HTTP header names parser"
         COMMAND cat ${INFILE} | ${GEN_HEADER_PARSER} > header_names_parser.cpp
     )
     
     add_custom_command(
         OUTPUT header_names_generator.cpp
-        DEPENDS filtered_headers ${GEN_HEADER_GENERATOR}
+        DEPENDS filtered_headers ${GEN_HEADER_GENERATOR} ${INFILE}
         COMMENT "Generate HTTP header names generator"
         COMMAND cat ${INFILE} | ${GEN_HEADER_GENERATOR} > header_names_generator.cpp
+    )
+    add_custom_target(
+        http_header_parser_generator
+        DEPENDS filtered_headers header_names_parser.cpp header_names_generator.cpp
     )
 endfunction()
