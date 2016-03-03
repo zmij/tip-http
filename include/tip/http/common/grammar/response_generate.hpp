@@ -16,7 +16,7 @@
 BOOST_FUSION_ADAPT_ADT(
 tip::http::response,
 (tip::http::response::version_type&, tip::http::response::version_type const&, obj.version, /**/)
-(int, int, obj.status, /**/)
+(int, int, static_cast<int>(obj.status), /**/)
 (std::string&, std::string const&, obj.status_line, /**/)
 (tip::http::headers&, tip::http::headers const&, obj.headers_, /**/)
 );
@@ -25,6 +25,20 @@ namespace tip {
 namespace http {
 namespace grammar {
 namespace gen {
+
+template < typename OutputIterator >
+struct response_status_grammar :
+		boost::spirit::karma::grammar< OutputIterator, response_status()> {
+	response_status_grammar() : response_status_grammar::base_type(root)
+	{
+		namespace karma = boost::spirit::karma;
+		namespace phx = boost::phoenix;
+		using karma::_val;
+		using karma::_1;
+		root = karma::int_[ _1 = phx::static_cast_< int >(_val) ];
+	}
+	boost::spirit::karma::rule< OutputIterator, response_status()> root;
+};
 
 template < typename OutputIterator >
 struct response_grammar :
@@ -56,11 +70,12 @@ struct stock_response_grammar :
 		using karma::_1;
 		using karma::_2;
 		using karma::_3;
+
 		root =
 		(
 			"<html>"
 			"<head><title>" << karma::string << "</title></head>"
-			"<body><h1>" << karma::int_ << " " << karma::string << "</h1></body>"
+			"<body><h1>" << status << " " << karma::string << "</h1></body>"
 			"</html>"
 		)[
 		  _1 = (phx::bind(&response::status_line, _val)),
@@ -68,7 +83,8 @@ struct stock_response_grammar :
 		  _3 = (phx::bind(&response::status_line, _val))
 		];
 	}
-	boost::spirit::karma::rule< OutputIterator, value_type()> root;
+	boost::spirit::karma::rule< OutputIterator, value_type()>	root;
+	response_status_grammar< OutputIterator >					status;
 };
 
 

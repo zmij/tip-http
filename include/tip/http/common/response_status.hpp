@@ -10,11 +10,11 @@
 
 namespace tip {
 namespace http {
-namespace response_status {
+
 /** The status of the reply.
  * [RFC 2616 Fielding, et al.](http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html)
  */
-enum status_type {
+enum class response_status {
 	/** Informational */
 	continue_						= 100,
 	switching_protocols				= 101,
@@ -60,9 +60,45 @@ enum status_type {
 	service_unavailable				= 503,
 	gateway_timeout					= 504,
 	http_version_not_supported		= 505
+};  // enum response_status
+
+enum class response_class {
+	informational		= 0x01,
+	successful			= 0x02,
+	redirection			= 0x04,
+	client_error		= 0x08,
+	server_error		= 0x10
 };
 
-}  // namespace response_status
+inline response_class
+status_class(response_status s)
+{
+	return static_cast< response_class >( static_cast< int >(s) / 100 );
+}
+
+inline bool
+is_error(response_status s)
+{
+	return static_cast< int >(s) / 100 >= 4;
+}
+
+inline bool
+is_error(response_class c)
+{
+	return c >= response_class::client_error;
+}
+
+inline ::std::ostream&
+operator << (::std::ostream& os, response_status const& val)
+{
+	std::ostream::sentry s(os);
+	if (s) {
+		os << static_cast<int>(val);
+	}
+	return os;
+}
+
+
 }  // namespace http
 }  // namespace tip
 

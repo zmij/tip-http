@@ -88,9 +88,9 @@ private:
 			size_t bytes_transferred, response_const_ptr resp);
 
 	void
-	send_response( response_const_ptr resp );
+	send_response(request_ptr req, response_const_ptr resp);
 	void
-	send_error(response_status::status_type status);
+	send_error(request_ptr req, response_status status);
 private:
 	typedef boost::asio::streambuf buffer_type;
 	io_service_weak_ptr io_service_;

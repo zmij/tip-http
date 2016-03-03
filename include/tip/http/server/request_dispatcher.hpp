@@ -43,6 +43,19 @@ public:
 		add_handler( methods, path, std::make_shared< T >() );
 	}
 
+	template < typename T, typename ... U >
+	void
+	add_handler( request_method method, std::string const& path, U ... args )
+	{
+		add_handler( method, path, std::make_shared< T >( std::forward(args) ... ) );
+	}
+	template < typename T, typename ... U >
+	void
+	add_handler( request_method_set const& methods, std::string const& path, U ... args )
+	{
+		add_handler( methods, path, std::make_shared< T >( std::forward(args) ... ) );
+	}
+
 	void
 	get(std::string const&, request_handler_ptr);
 	void

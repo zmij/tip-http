@@ -34,7 +34,7 @@ struct response {
 	typedef read_result_type::read_callback_type	read_callback;
 
 	version_type					version;
-	response_status::status_type	status;
+	response_status					status;
 	std::string						status_line;
 	headers							headers_;
 
@@ -44,7 +44,7 @@ struct response {
 	operator == (response const&) const;
 
 	void
-	set_status(response_status::status_type);
+	set_status(response_status);
 	size_t
 	content_length() const;
 
@@ -76,7 +76,7 @@ struct response {
 	get_cookies(cookies&);
 
 	static response_const_ptr
-	stock_response(response_status::status_type status);
+	stock_response(response_status status);
 private:
 	read_result_type
 	read_body_content_length(std::istream& is, size_t remain);
