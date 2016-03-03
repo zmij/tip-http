@@ -107,7 +107,15 @@ connection::read_request_body(request_ptr req, read_result_type res)
 						shared_from_this(), req, std::placeholders::_1))
 			};
 			add_context(rep, new remote_address(rep, peer_));
-			request_handler_->handle_request(rep);
+			try {
+				request_handler_->handle_request(rep);
+			} catch (::std::exception const& e) {
+				local_log(logger::ERROR) << "Exception when dispatching request "
+						<< req->path << ": " << e.what();
+			} catch (...) {
+				local_log(logger::ERROR) << "Unknown exception when dispatching request "
+						<< req->path;
+			}
 		} else {
 			local_log(logger::WARNING) << "IO service weak pointer is bad";
 		}
@@ -154,8 +162,11 @@ connection::send_response(request_ptr req, response_const_ptr resp)
 	using std::placeholders::_1;
 	using std::placeholders::_2;
 
-	local_log() << req->path << " " << static_cast<int>(resp->status)
-			<< " '" << resp->status_line << "'";
+	local_log() << req->method << " " << req->path
+			<< " " << resp->status << " '" << resp->status_line << "'";
+	if (is_error(resp->status) && (HTTPCONN_DEFAULT_SEVERITY != logger::OFF)) {
+		local_log() << "Request headers:\n" << req->headers_;
+	}
 
 	std::ostream os(&outgoing_);
 	os << *resp;
