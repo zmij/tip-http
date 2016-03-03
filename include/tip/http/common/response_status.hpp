@@ -8,6 +8,8 @@
 #ifndef TIP_HTTP_COMMON_RESPONSE_STATUS_HPP_
 #define TIP_HTTP_COMMON_RESPONSE_STATUS_HPP_
 
+#include <iostream>
+
 namespace tip {
 namespace http {
 
