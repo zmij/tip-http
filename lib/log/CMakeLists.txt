@@ -33,6 +33,6 @@ add_subdirectory(src)
 
 get_directory_property(has_parent PARENT_DIRECTORY)
 if (has_parent)
-    set(TIP_LOG_LIB ${PROJECT_PREFIX}-log PARENT_SCOPE)
-    set(TIP_LOG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+    set(TIP_LOG_LIB ${PROJECT_PREFIX}-log CACHE INTERNAL "Name of tip log library target")
+    set(TIP_LOG_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE INTERNAL "Path to tip log libaray includes" )
 endif()

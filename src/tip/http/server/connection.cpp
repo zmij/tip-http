@@ -113,7 +113,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 			};
 			add_context(rep, new remote_address(rep, peer_));
 			try {
-				request_handler_->handle_request(rep);
+			request_handler_->handle_request(rep);
 			} catch (::std::exception const& e) {
 				local_log(logger::ERROR) << "Exception when dispatching request "
 						<< req->path << ": " << e.what();
