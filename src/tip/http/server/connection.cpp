@@ -166,6 +166,12 @@ connection::send_response(request_ptr req, response_const_ptr resp)
 			<< " " << resp->status << " '" << resp->status_line << "'";
 	if (is_error(resp->status) && (HTTPCONN_DEFAULT_SEVERITY != logger::OFF)) {
 		local_log() << "Request headers:\n" << req->headers_;
+		if (!req->body_.empty()) {
+			::std::size_t bs = req->body_.size() < 100 ? req->body_.size() : 100;
+			::std::string body(req->body_.begin(), req->body_.begin() + 100);
+			local_log() << "Request body (max 100 bytes):\n"
+					<< body;
+		}
 	}
 
 	std::ostream os(&outgoing_);
