@@ -42,7 +42,7 @@ public:
 	typedef body_type::const_iterator					body_input_iterator;
 
 	typedef std::function< void(response_const_ptr) >	send_response_func;
-	typedef std::function< void(response_status::status_type) > send_error_func;
+	typedef std::function< void(response_status) > send_error_func;
 
 	typedef std::shared_ptr< boost::asio::io_service > io_service_ptr;
 public:
@@ -95,15 +95,15 @@ public:
 	 * @param
 	 */
 	void
-	done( response_status::status_type = response_status::ok );
+	done( response_status = response_status::ok );
 
 	void
 	redirect( iri_type const&,
-			response_status::status_type = response_status::temporary_redirect );
+			response_status = response_status::temporary_redirect );
 	void
-	client_error(response_status::status_type = response_status::bad_request);
+	client_error(response_status = response_status::bad_request);
 	void
-	server_error(response_status::status_type = response_status::internal_server_error);
+	server_error(response_status = response_status::internal_server_error);
 
 	body_type&
 	response_body();

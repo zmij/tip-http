@@ -80,7 +80,7 @@ connection::handle_read_headers(const boost::system::error_code& e,
 			read_request_body(req, req->read_body(is));
 		} else {
 			// Bad request
-			send_error(response_status::bad_request);
+			send_error(req, response_status::bad_request);
 			local_log(logger::ERROR) << "Error parsing headers";
 		}
 	} else {
@@ -102,9 +102,9 @@ connection::read_request_body(request_ptr req, read_result_type res)
 				io,
 				req,
 				strand_.wrap(std::bind(&connection::send_response,
-						shared_from_this(), std::placeholders::_1)),
+						shared_from_this(), req, std::placeholders::_1)),
 				strand_.wrap(std::bind(&connection::send_error,
-						shared_from_this(), std::placeholders::_1))
+						shared_from_this(), req, std::placeholders::_1))
 			};
 			add_context(rep, new remote_address(rep, peer_));
 			request_handler_->handle_request(rep);
@@ -114,7 +114,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 	} else if (!res.result) {
 		// fail read
 		local_log(logger::WARNING) << "Failed to read request body";
-		send_error(response_status::bad_request);
+		send_error(req, response_status::bad_request);
 	} else if (res.callback) {
 		boost::asio::async_read(socket_, incoming_,
 			boost::asio::transfer_at_least(1),
@@ -148,13 +148,13 @@ connection::handle_read_body(const boost::system::error_code& e,
 }
 
 void
-connection::send_response(response_const_ptr resp)
+connection::send_response(request_ptr req, response_const_ptr resp)
 {
 	typedef std::vector< boost::asio::const_buffer > output_buffers_type;
 	using std::placeholders::_1;
 	using std::placeholders::_2;
 
-	local_log() << "Send response " << resp->status
+	local_log() << req->path << " " << static_cast<int>(resp->status)
 			<< " '" << resp->status_line << "'";
 
 	std::ostream os(&outgoing_);
@@ -180,10 +180,10 @@ connection::send_response(response_const_ptr resp)
 }
 
 void
-connection::send_error(response_status::status_type status)
+connection::send_error(request_ptr req, response_status status)
 {
 	response_const_ptr resp = response::stock_response(status);
-	send_response(resp);
+	send_response(req, resp);
 }
 
 void

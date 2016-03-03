@@ -40,7 +40,7 @@ struct response_grammar :
 		status_line %= +~char_("\r");
 		root = version[ phx::bind(&response::version, _val) = _1 ] >> +space >>
 				int_[ phx::bind(&response::status, _val) =
-						phx::static_cast_< response_status::status_type >(_1)] >> +space >>
+						phx::static_cast_< response_status >(_1)] >> +space >>
 				status_line[ phx::bind(&response::status_line, _val) = _1 ] >> crlf >>
 				-_headers[ phx::bind(&response::headers_, _val) = _1 ] >> crlf;
 	}

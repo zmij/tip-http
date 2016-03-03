@@ -27,7 +27,7 @@ LOCAL_LOGGING_FACILITY(HTTPRESP, TRACE);
 
 namespace {
 
-const std::map< response_status::status_type, std::string > STATUS_STRINGS {
+const std::map< response_status, std::string > STATUS_STRINGS {
 	{ response_status::continue_,						"Continue"						},
 	{ response_status::switching_protocols,				"Switching Protocols"			},
 
@@ -74,17 +74,17 @@ const std::map< response_status::status_type, std::string > STATUS_STRINGS {
 	{ response_status::http_version_not_supported,		"HTTP Version Not Supported"	}
 };
 
-const std::set<response_status::status_type> NO_BODY = {
+const std::set<response_status> NO_BODY = {
 	response_status::no_content,
 	response_status::reset_content
 };
 
-std::map<response_status::status_type, response_const_ptr> STOCK_RESPONSES;
+std::map<response_status, response_const_ptr> STOCK_RESPONSES;
 
 }  // namespace
 
 void
-response::set_status(response_status::status_type s)
+response::set_status(response_status s)
 {
 	if (s != status) {
 		status = s;
@@ -296,7 +296,7 @@ operator << (std::ostream& os, response const& val)
 }
 
 response_const_ptr
-response::stock_response(response_status::status_type status)
+response::stock_response(response_status status)
 {
 	namespace karma = boost::spirit::karma;
 	typedef std::back_insert_iterator< body_type > output_iterator;

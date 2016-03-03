@@ -86,7 +86,7 @@ struct reply::impl {
 	}
 
 	void
-	done(response_status::status_type status)
+	done(response_status status)
 	{
 		registry_.clear();
 		output_stream_.flush();
@@ -100,7 +100,7 @@ struct reply::impl {
 		}
 	}
 	void
-	send_error(response_status::status_type status)
+	send_error(response_status status)
 	{
 		if (send_error_) {
 			send_error_(status);
@@ -228,19 +228,19 @@ reply::set_locale(std::locale const& loc)
 }
 
 void
-reply::done(response_status::status_type status)
+reply::done(response_status status)
 {
 	pimpl_->done(status);
 }
 
 void
-reply::client_error(response_status::status_type status)
+reply::client_error(response_status status)
 {
 	pimpl_->send_error(status);
 }
 
 void
-reply::server_error(response_status::status_type status)
+reply::server_error(response_status status)
 {
 	pimpl_->send_error(status);
 }

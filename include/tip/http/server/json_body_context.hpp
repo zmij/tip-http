@@ -66,7 +66,7 @@ class json_error : public client_error {
 public:
 	json_error(std::string const& w) : client_error("JSONPARSE", w) {}
 	json_error(std::string const& cat, std::string const& w,
-			response_status::status_type s
+			response_status s
 				= response_status::internal_server_error,
 				log::logger::event_severity sv = log::logger::ERROR)
 			: client_error(cat, w, s, sv) {}

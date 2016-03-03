@@ -167,8 +167,8 @@ struct service::impl : std::enable_shared_from_this<impl> {
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
-		int status = resp->status / 100;
-		if (status == 3) {
+		response_class r_class = status_class(resp->status);
+		if (r_class == response_class::redirection) {
 			// Handle redirect
 			headers::const_iterator f = resp->headers_.find(Location);
 			if (f != resp->headers_.end()) {
@@ -191,9 +191,10 @@ struct service::impl : std::enable_shared_from_this<impl> {
 				local_log(logger::WARNING) << "Request redirected, but no Location header set";
 				cb(resp);
 			}
-		} else if (status == 4) {
+		} else if (is_error(r_class)) {
 
-			local_log(logger::WARNING) << "Received error response " << resp->status
+			local_log(logger::WARNING) << "Received error response "
+					<< static_cast<int>(resp->status)
 					<< " " << resp->status_line << "\n" << *req;
 
 			cb(resp);
