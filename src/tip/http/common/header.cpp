@@ -63,7 +63,6 @@ content_length(headers const& hdrs)
 bool
 chunked_transfer_encoding(headers const& hdrs)
 {
-	typedef std::string::const_iterator string_iterator;
 	auto p = hdrs.find(TransferEncoding);
 	if (p != hdrs.end()) {
 		return p->second == "chunked";
