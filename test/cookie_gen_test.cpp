@@ -9,6 +9,9 @@
 #include <grammar/grammar_gen_test.hpp>
 #include <tip/http/common/grammar/cookie_generate.hpp>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 namespace http = tip::http;
 namespace gen = http::grammar::gen;
 namespace pt = boost::posix_time;
@@ -65,3 +68,5 @@ GRAMMAR_GEN_TEST(gen::set_cookie_grammar, SetCookie, http::cookie,
 		)
 	)
 );
+
+#pragma GCC diagnostic pop

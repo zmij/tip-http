@@ -97,7 +97,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
 		using std::placeholders::_2;
 		try {
 			session_ptr s = get_session(iri);
-			s->send_request(GET, iri, body,
+			s->send_request(method, iri, body,
 					std::bind(&impl::handle_response,
 							shared_from_this(), _1, _2, cb, ecb), ecb);
 		} catch (...) {
@@ -115,7 +115,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
 		using std::placeholders::_2;
 		try {
 			session_ptr s = get_session(iri);
-			s->send_request(GET, iri, std::move(body),
+			s->send_request(method, iri, std::move(body),
 					std::bind(&impl::handle_response,
 							shared_from_this(), _1, _2, cb, ecb), ecb);
 		} catch (...) {

@@ -21,7 +21,7 @@ tip::http::request,
 (tip::iri::fragment&, tip::iri::fragment const&, obj.fragment, /**/)
 (tip::http::request::version_type&, tip::http::request::version_type const&, obj.version, /**/)
 (tip::http::headers&, tip::http::headers const&, obj.headers_, /**/)
-);
+)
 
 namespace tip {
 namespace http {

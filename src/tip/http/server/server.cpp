@@ -143,7 +143,7 @@ server::handle_stop()
 }
 
 void
-server::handle_error(boost::system::error_code const& e, int signo)
+server::handle_error(boost::system::error_code const&, int signo)
 {
 	local_log(logger::ERROR) << "Received signal " << strsignal(signo) << ", terminating";
 	handle_stop();

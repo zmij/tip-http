@@ -50,7 +50,7 @@ struct header_grammar :
 
 	struct value_ {
 		void
-		operator()(std::string const& v, context_type& ctx, bool& pass) const
+		operator()(std::string const& v, context_type& ctx, bool&) const
 		{
 			boost::fusion::at_c<0>(ctx.attributes).second = v;
 		}
