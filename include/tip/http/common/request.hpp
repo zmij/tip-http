@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <boost/asio/buffer.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace tip {
 namespace http {
@@ -25,6 +26,7 @@ public:
 	typedef std::pair< std::string, std::string >		query_param_type;
 	typedef std::multimap< std::string, std::string >	query_type;
 	typedef std::vector< char >							body_type;
+	typedef boost::posix_time::ptime					timestamp_type;
 	typedef tip::iri::basic_iri<query_type>				iri_type;
 	typedef util::read_result< std::istream& >			read_result_type;
 	typedef read_result_type::read_callback_type		read_callback;
@@ -38,6 +40,8 @@ public:
 	mutable headers	headers_;
 
 	body_type		body_;
+
+	timestamp_type	start_;
 
 	size_t
 	content_length() const;

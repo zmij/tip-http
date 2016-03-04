@@ -18,17 +18,21 @@
 
 #include <tip/log.hpp>
 
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/spirit/include/support_istream_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <vector>
 #include <functional>
+#include <chrono>
 
 namespace tip {
 namespace http {
 namespace server {
 
 LOCAL_LOGGING_FACILITY(HTTPCONN, TRACE);
+
+const ::std::size_t LOG_MAX_REQUEST_BYTES = 500;
 
 connection::connection(io_service_ptr io_service,
                        request_handler_ptr handler) :
@@ -98,6 +102,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 		// success read
 		io_service_ptr io = io_service_.lock();
 		if (io) {
+			req->start_ = boost::posix_time::microsec_clock::local_time();
 			reply rep{
 				io,
 				req,
@@ -108,7 +113,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 			};
 			add_context(rep, new remote_address(rep, peer_));
 			try {
-				request_handler_->handle_request(rep);
+			request_handler_->handle_request(rep);
 			} catch (::std::exception const& e) {
 				local_log(logger::ERROR) << "Exception when dispatching request "
 						<< req->path << ": " << e.what();
@@ -162,10 +167,19 @@ connection::send_response(request_ptr req, response_const_ptr resp)
 	using std::placeholders::_1;
 	using std::placeholders::_2;
 
+	request::timestamp_type end = boost::posix_time::microsec_clock::local_time();
 	local_log() << req->method << " " << req->path
-			<< " " << resp->status << " '" << resp->status_line << "'";
+			<< " " << resp->status << " '" << resp->status_line << "' process time: "
+			<< (end - req->start_);
 	if (is_error(resp->status) && (HTTPCONN_DEFAULT_SEVERITY != logger::OFF)) {
 		local_log() << "Request headers:\n" << req->headers_;
+		if (!req->body_.empty()) {
+			::std::size_t bs = req->body_.size() < LOG_MAX_REQUEST_BYTES ?
+					req->body_.size() : LOG_MAX_REQUEST_BYTES;
+			::std::string body(req->body_.begin(), req->body_.begin() + bs);
+			local_log() << "Request body (max " << LOG_MAX_REQUEST_BYTES << " bytes):\n"
+					<< body;
+		}
 	}
 
 	std::ostream os(&outgoing_);
