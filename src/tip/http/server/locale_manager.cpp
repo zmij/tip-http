@@ -59,8 +59,8 @@ struct locale_manager::impl {
 		input_iterator l = lcnames.end();
 		if (!boost::spirit::qi::parse(f, l, names_grammar(), new_locales) || f != l)
 			throw std::runtime_error("Invalid locales string");
-		for (auto& l: new_locales) {
-			add_language( create_locale_name(l));
+		for (auto& loc: new_locales) {
+			add_language( create_locale_name(loc));
 		}
 	}
 

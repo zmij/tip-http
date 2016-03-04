@@ -23,7 +23,7 @@
 namespace tip {
 namespace http {
 
-LOCAL_LOGGING_FACILITY(HTTPRESP, TRACE);
+//LOCAL_LOGGING_FACILITY(HTTPRESP, TRACE);
 
 namespace {
 
@@ -285,12 +285,11 @@ operator << (std::ostream& os, response const& val)
 	namespace karma = boost::spirit::karma;
 	typedef std::ostream_iterator<char> output_iterator;
 	typedef grammar::gen::response_grammar<output_iterator> response_head;
-	typedef grammar::gen::header_grammar<output_iterator> header_grammar;
 
 	std::ostream::sentry s(os);
 	if (s) {
 		output_iterator out(os);
-		karma::generate(out, response_head(), val);
+		karma::generate(out, response_head{}, val);
 	}
 	return os;
 }
@@ -304,7 +303,10 @@ response::stock_response(response_status status)
 
 	auto f = STOCK_RESPONSES.find(status);
 	if (f == STOCK_RESPONSES.end()) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 		response_ptr resp( new response{{1, 1}});
+#pragma GCC diagnostic pop
 		resp->set_status(status);
 		resp->add_header({ ContentType, "text/html" });
 

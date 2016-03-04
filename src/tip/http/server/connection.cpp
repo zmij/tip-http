@@ -74,10 +74,9 @@ connection::read_request_headers()
 
 void
 connection::handle_read_headers(const boost::system::error_code& e,
-								std::size_t bytes_transferred)
+								std::size_t)
 {
 	if (!e) {
-		typedef boost::spirit::istream_iterator buffer_iterator;
 		std::istream is(&incoming_);
 		request_ptr req = std::make_shared< request >();
 		if (req->read_headers(is)) {
@@ -142,7 +141,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 
 void
 connection::handle_read_body(const boost::system::error_code& e,
-								std::size_t bytes_transferred,
+								std::size_t,
 								request_ptr req,
 								read_callback cb)
 {
@@ -230,7 +229,7 @@ connection::handle_write(const boost::system::error_code& e)
 
 void
 connection::handle_write_response(boost::system::error_code const& e,
-		size_t bytes_transferred, response_const_ptr resp)
+		size_t, response_const_ptr)
 {
 	if (!e) {
 		// Initiate graceful connection closure.

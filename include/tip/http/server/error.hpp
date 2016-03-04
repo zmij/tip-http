@@ -44,9 +44,9 @@ public:
 	void
 	log_error(std::string const& message = "") const;
 private:
-	log::logger::event_severity		severity_;
 	std::string						category_;
 	response_status					status_;
+	log::logger::event_severity		severity_;
 };
 
 class client_error : public error {

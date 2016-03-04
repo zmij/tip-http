@@ -19,7 +19,7 @@ tip::http::response,
 (int, int, static_cast<int>(obj.status), /**/)
 (std::string&, std::string const&, obj.status_line, /**/)
 (tip::http::headers&, tip::http::headers const&, obj.headers_, /**/)
-);
+)
 
 namespace tip {
 namespace http {

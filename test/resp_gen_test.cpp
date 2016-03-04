@@ -9,6 +9,9 @@
 #include <tip/http/common/grammar/response_generate.hpp>
 #include "grammar/grammar_gen_test.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 namespace gen = tip::http::grammar::gen;
 namespace iri_gen = tip::iri::grammar::gen;
 namespace http = tip::http;
@@ -29,3 +32,6 @@ GRAMMAR_GEN_TEST(gen::response_grammar, Response, http::response,
 		)
 	)
 );
+
+#pragma GCC diagnostic pop
+

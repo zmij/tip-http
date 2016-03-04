@@ -9,7 +9,10 @@
 
 #include <gtest/gtest.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 LOCAL_LOGGING_FACILITY(HTTPTEST, TRACE);
+#pragma GCC diagnostic pop
 
 // Initialize the test suite
 int

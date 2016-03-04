@@ -8,6 +8,9 @@
 #include <tip/http/common/grammar/request_generate.hpp>
 #include "grammar/grammar_gen_test.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 namespace gen = tip::http::grammar::gen;
 namespace iri_gen = tip::iri::grammar::gen;
 namespace http = tip::http;
@@ -113,3 +116,5 @@ GRAMMAR_GEN_TEST(gen::request_grammar, Request, http::request,
 		)
 	)
 );
+
+#pragma GCC diagnostic pop

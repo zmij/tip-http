@@ -234,13 +234,13 @@ struct session_fsm_ :
 			events::request
 		> deferred_events;
 		void
-		on_exit(events::transport_error const&, session_fsm& fsm)
+		on_exit(events::transport_error const&, session_fsm&)
 		{
 			//fsm.get_deferred_queue().clear();
 		}
 		template < typename Event >
 		void
-		on_exit(Event const&, session_fsm& fsm)
+		on_exit(Event const&, session_fsm&)
 		{
 
 		}
@@ -341,14 +341,14 @@ struct session_fsm_ :
 
 	struct connection_failed : boost::msm::front::state<> {
 		void
-		on_entry(events::transport_error const& evt, session_fsm& fsm)
+		on_entry(events::transport_error const& evt, session_fsm&)
 		{
 			local_log() << "entering connection failed";
 			error = evt.error;
 		}
 		template< typename Event >
 		void
-		on_exit(Event const&, session_fsm& fsm)
+		on_exit(Event const&, session_fsm&)
 		{
 			local_log() << "exiting connection failed";
 			error = nullptr;
@@ -442,7 +442,7 @@ struct session_fsm_ :
 				std::bind( &session_fsm_::handle_connect,
 						this, std::placeholders::_1 ))),
 		host_(iri.authority.host), scheme_(iri.scheme),
-		on_close_(on_close), default_headers_(default_headers)
+		default_headers_(default_headers), on_close_(on_close)
 	{
 	}
 
@@ -489,7 +489,7 @@ struct session_fsm_ :
 	}
 
 	void
-	handle_write(error_code const& ec, size_t bytes_transferred, buffer_ptr b)
+	handle_write(error_code const& ec, size_t, buffer_ptr)
 	{
 		using std::placeholders::_1;
 		using std::placeholders::_2;
@@ -505,7 +505,7 @@ struct session_fsm_ :
 		}
 	}
 	void
-	handle_read_headers(error_code const& ec, size_t bytes_transferred)
+	handle_read_headers(error_code const& ec, size_t)
 	{
 		if (!ec) {
 			// Parse response head
@@ -551,8 +551,8 @@ struct session_fsm_ :
 	}
 
 	void
-	handle_read_body(error_code const& ec, size_t bytes_transferred,
-			response_ptr resp, response::read_callback cb)
+	handle_read_body(error_code const& ec, size_t, response_ptr resp,
+			response::read_callback cb)
 	{
 		if (!ec) {
 			std::istream is(&incoming_);

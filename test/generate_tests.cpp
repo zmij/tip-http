@@ -27,7 +27,7 @@ test_output_structure,
 (std::string&, std::string const&, obj.str, obj.str = val)
 (pair_type&, pair_type const&, obj.int_pair, obj.int_pair = val)
 (double, double, obj.d, obj.d = val)
-);
+)
 
 TEST(GenerateTest, StructEncode)
 {

@@ -15,7 +15,7 @@ namespace test {
 
 struct some_test_prerequisite {
 	bool
-	operator()(reply const& r) const
+	operator()(reply const&) const
 	{
 		return false;
 	}
