@@ -636,8 +636,8 @@ public:
 	{
 		base_type::process_event( events::request{ req, cb, ecb });
 	}
-	virtual void
-	do_close()
+	void
+	do_close() override
 	{
 		base_type::process_event( events::disconnect() );
 	}
