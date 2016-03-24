@@ -70,7 +70,7 @@ struct reply::impl {
 	void
 	add_cookie(cookie const& c)
 	{
-		add_cookie(std::move(cookie(c)));
+		add_cookie(cookie(c));
 	}
 
 	void
