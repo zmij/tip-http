@@ -13,14 +13,6 @@
 #include <tip/iri/grammar/iri_generate.hpp>
 #include <tip/http/common/response.hpp>
 
-BOOST_FUSION_ADAPT_ADT(
-tip::http::response,
-(tip::http::response::version_type&, tip::http::response::version_type const&, obj.version, /**/)
-(int, int, static_cast<int>(obj.status), /**/)
-(std::string&, std::string const&, obj.status_line, /**/)
-(tip::http::headers&, tip::http::headers const&, obj.headers_, /**/)
-)
-
 namespace tip {
 namespace http {
 namespace grammar {
@@ -29,13 +21,14 @@ namespace gen {
 template < typename OutputIterator >
 struct response_status_grammar :
 		boost::spirit::karma::grammar< OutputIterator, response_status()> {
+	typedef ::std::underlying_type< response_status >::type integral_type;
 	response_status_grammar() : response_status_grammar::base_type(root)
 	{
 		namespace karma = boost::spirit::karma;
 		namespace phx = boost::phoenix;
 		using karma::_val;
 		using karma::_1;
-		root = karma::int_[ _1 = phx::static_cast_< int >(_val) ];
+		root = karma::int_[ _1 = phx::static_cast_< integral_type >(_val) ];
 	}
 	boost::spirit::karma::rule< OutputIterator, response_status()> root;
 };
@@ -46,15 +39,29 @@ struct response_grammar :
 	response_grammar() : response_grammar::base_type(root)
 	{
 		namespace karma = boost::spirit::karma;
+		namespace phx = boost::phoenix;
+		using karma::_val;
+		using karma::_1;
+		using karma::_2;
+		using karma::_3;
+		using karma::_4;
+
 		version = "HTTP/" << karma::int_ << "." << karma::int_;
 		crlf = karma::lit("\r\n");
 
-		root = version << ' ' << karma::int_ << ' ' << karma::string << crlf
-				<< headers;
+		root = (version << ' ' << status << ' ' << karma::string << crlf
+				<< headers)
+			[
+			 	 _1 = phx::bind(&response::version, _val),
+				 _2 = phx::bind(&response::status, _val),
+				 _3 = phx::bind(&response::status_line, _val),
+				 _4 = phx::bind(&response::headers_, _val)
+			];
 	}
 	boost::spirit::karma::rule< OutputIterator, response()> root;
 	boost::spirit::karma::rule< OutputIterator, response::version_type()> version;
 	boost::spirit::karma::rule< OutputIterator> crlf;
+	response_status_grammar< OutputIterator >	status;
 	headers_grammar< OutputIterator > headers;
 };
 
