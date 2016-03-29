@@ -66,12 +66,16 @@ namespace {
 	bool logger_use_colors = false;
 	bool flush_stream_ = false;
 
-	void lib_main(int argc, char* argv[], char* envp[])
+	void
+	lib_main(int, char* argv[], char* [])
 	{
 		proc_name(argv[0]);
 	}
 #ifdef __linux__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 	__attribute__((section(".init_array"))) void (* p_lib_main)(int,char*[],char*[]) = &lib_main;
+#pragma GCC diagnostic pop
 #endif /* __linux__ */
 } // namespace
 
@@ -314,7 +318,6 @@ struct logger::Impl {
 	std::streambuf&
 	buffer()
 	{
-		event_data& evt = event();
 		return event().buffer_;
 	}
 
@@ -470,8 +473,8 @@ operator << (log::logger& out, ANSI_COLOR col)
 	logger::event_severity s = out.severity();
 	if (logger::min_severity() <= s && logger::OFF < s
 			&& log::logger::use_colors()) {
-		std::ostream s(&out.buffer());
-		s << col;
+		std::ostream os(&out.buffer());
+		os << col;
 	}
 	return out;
 }
