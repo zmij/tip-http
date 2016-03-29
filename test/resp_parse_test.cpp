@@ -9,6 +9,9 @@
 #include <grammar/grammar_parse_test.hpp>
 #include <tip/http/common/grammar/response_parse.hpp>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 namespace http = tip::http;
 namespace parse = http::grammar::parse;
 GRAMMAR_TEST( parse::response_grammar, Response,
@@ -48,4 +51,6 @@ GRAMMAR_PARSE_TEST( parse::response_grammar, Response, http::response,
 		)
 	)
 );
+
+#pragma GCC diagnostic pop
 

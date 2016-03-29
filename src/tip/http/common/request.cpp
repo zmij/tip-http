@@ -141,12 +141,6 @@ operator << (std::ostream& os, request const& val)
 request_ptr
 request::create(request_method method, iri_type const& iri, body_type const& body)
 {
-//	headers h {
-//		{ Host, iri.authority.host }
-//	};
-//	if (iri.authority.userinfo) {
-//		// TODO Do something with userinfo
-//	}
 	return request_ptr(new request{
 		method,
 		version_type{ 1, 1 },
@@ -154,7 +148,8 @@ request::create(request_method method, iri_type const& iri, body_type const& bod
 		headers {
 			{ Host, iri.authority.host }
 		},
-		body
+		body,
+		boost::posix_time::microsec_clock::local_time()
 	});
 }
 
@@ -168,7 +163,8 @@ request::create(request_method method, iri_type const& iri, body_type&& body)
 		headers {
 			{ Host, iri.authority.host }
 		},
-		std::move(body)
+		std::move(body),
+		boost::posix_time::microsec_clock::local_time()
 	});
 }
 

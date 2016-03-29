@@ -74,10 +74,9 @@ connection::read_request_headers()
 
 void
 connection::handle_read_headers(const boost::system::error_code& e,
-								std::size_t bytes_transferred)
+								std::size_t)
 {
 	if (!e) {
-		typedef boost::spirit::istream_iterator buffer_iterator;
 		std::istream is(&incoming_);
 		request_ptr req = std::make_shared< request >();
 		if (req->read_headers(is)) {
@@ -142,7 +141,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
 
 void
 connection::handle_read_body(const boost::system::error_code& e,
-								std::size_t bytes_transferred,
+								std::size_t,
 								request_ptr req,
 								read_callback cb)
 {
@@ -167,10 +166,16 @@ connection::send_response(request_ptr req, response_const_ptr resp)
 	using std::placeholders::_1;
 	using std::placeholders::_2;
 
-	request::timestamp_type end = boost::posix_time::microsec_clock::local_time();
-	local_log() << req->method << " " << req->path
-			<< " " << resp->status << " '" << resp->status_line << "' process time: "
-			<< (end - req->start_);
+	{
+		auto proc_time = boost::posix_time::microsec_clock::local_time() - req->start_;
+		if (proc_time.is_not_a_date_time()) {
+			local_log() << req->method << " " << req->path
+					<< " " << resp->status << " '" << resp->status_line << "' process time: 00:00:00.0";
+		} else {
+			local_log() << req->method << " " << req->path
+					<< " " << resp->status << " '" << resp->status_line << "' process time: " << proc_time;
+		}
+	}
 	if (is_error(resp->status) && (HTTPCONN_DEFAULT_SEVERITY != logger::OFF)) {
 		local_log() << "Request headers:\n" << req->headers_;
 		if (!req->body_.empty()) {
@@ -230,7 +235,7 @@ connection::handle_write(const boost::system::error_code& e)
 
 void
 connection::handle_write_response(boost::system::error_code const& e,
-		size_t bytes_transferred, response_const_ptr resp)
+		size_t, response_const_ptr)
 {
 	if (!e) {
 		// Initiate graceful connection closure.

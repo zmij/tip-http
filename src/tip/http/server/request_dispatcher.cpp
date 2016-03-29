@@ -32,7 +32,7 @@ struct request_dispatcher::impl {
 		if (p == handlers_.end()) {
 			p = handlers_.insert(std::make_pair(matcher, iri_handlers{})).first;
 		}
-		local_log() << "Add handler for " << matcher << " method " << method;
+		local_log() << "Add " << method << " handler: " << matcher;
 		p->second.insert(std::make_pair(method, handler));
 	}
 

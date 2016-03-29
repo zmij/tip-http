@@ -22,28 +22,33 @@ struct test_output_structure {
 	double d;
 };
 
-BOOST_FUSION_ADAPT_ADT(
-test_output_structure,
-(std::string&, std::string const&, obj.str, obj.str = val)
-(pair_type&, pair_type const&, obj.int_pair, obj.int_pair = val)
-(double, double, obj.d, obj.d = val)
-);
-
 TEST(GenerateTest, StructEncode)
 {
 	namespace karma = boost::spirit::karma;
 	namespace phx = boost::phoenix;
 	typedef std::ostream_iterator< char > sink_type;
+	using karma::_1;
+	using karma::_2;
+	using karma::_3;
+	using karma::_val;
+
 
 	karma::rule< sink_type, std::pair< int, int >() > pair =
 			karma::lit('{') << karma::int_ << ':' << karma::int_ << '}';
 	karma::rule< sink_type, test_output_structure() > test =
-			karma::string << " " << pair << " " << karma::double_;
+			(karma::string << " " << pair << " " << karma::double_)
+			[
+			 	 _1 = phx::bind( &test_output_structure::str, _val ),
+				 _2 = phx::bind( &test_output_structure::int_pair, _val ),
+				 _3 = phx::bind( &test_output_structure::d, _val )
+			];
 			//karma::string << " " << karma::double_;
 
 	std::ostringstream os;
 	sink_type out(os);
-	EXPECT_TRUE(karma::generate(out, test, test_output_structure{ "foo", {1, 5}, 3.14 }));
-	//EXPECT_TRUE(karma::generate(out, test, test_output_structure{ "foo", 3.14 }));
+	double d_val = 3.14;
+	test_output_structure val{ "foo", {1, 5}, d_val };
+	EXPECT_EQ(d_val, val.d);
+	EXPECT_TRUE(karma::generate(out, test, val));
 	EXPECT_EQ("foo {1:5} 3.14", os.str());
 }

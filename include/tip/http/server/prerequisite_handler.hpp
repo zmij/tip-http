@@ -113,7 +113,7 @@ template <>
 class prereqiusites<> {
 public:
 	inline bool
-	operator()(reply const& r) const
+	operator()(reply const&) const
 	{
 		return true;
 	}

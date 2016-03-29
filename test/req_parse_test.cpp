@@ -71,7 +71,6 @@ TEST(Parse, HeaderStreamParse)
 	typedef std::istreambuf_iterator<char> istreambuf_iterator;
 	typedef spirit::multi_pass< istreambuf_iterator > multi_pass_iterator;
 
-	typedef boost::spirit::istream_iterator stream_iterator;
 	typedef parse::header_grammar< multi_pass_iterator > stream_header_grammar;
 
 	std::istringstream is("Accept: text/plain\r\n");

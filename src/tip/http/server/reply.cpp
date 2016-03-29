@@ -23,8 +23,6 @@ namespace tip {
 namespace http {
 namespace server {
 
-LOCAL_LOGGING_FACILITY(HTTPREPLY, TRACE);
-
 struct reply::impl {
 	typedef std::set< cookie, cookie_name_cmp > cookies_type;
 	typedef boost::iostreams::stream_buffer<
@@ -44,6 +42,8 @@ struct reply::impl {
 	cookies_type		cookies_;
 	detail::context_registry registry_;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 	impl(io_service_ptr io_service, request_const_ptr req,
 			send_response_func sr, send_error_func se) :
 		io_service_(io_service), req_(req), resp_(new response{ {1,1} }),
@@ -51,6 +51,7 @@ struct reply::impl {
 		output_buffer_(resp_->body_), output_stream_(&output_buffer_)
 	{
 	}
+#pragma GCC diagnostic pop
 	~impl()
 	{
 		if (!response_sent_ && send_error_) {
@@ -69,7 +70,7 @@ struct reply::impl {
 	void
 	add_cookie(cookie const& c)
 	{
-		add_cookie(std::move(cookie(c)));
+		add_cookie(cookie(c));
 	}
 
 	void
