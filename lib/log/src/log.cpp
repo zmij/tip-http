@@ -191,50 +191,58 @@ struct log_writer {
 	run()
 	{
 		while (!finished_) {
-			{
-				std::unique_lock<std::mutex> lock(mtx_);
-				while (events_.empty() && !finished_) cond_.wait(lock);
-			}
-			bool empty_queue = false;
-			{
-				std::unique_lock<std::mutex> lock(mtx_);
-				empty_queue = events_.empty();
-			}
-			while (!empty_queue) {
-				event_ptr e = events_.front();
-				events_.pop();
-				event_data& evt = *e;
-				std::ostream::sentry s(out_);
-				if (s) {
-					bool use_colors = logger_use_colors;
-					if (use_colors)
-						out_ << severity_colors[ evt.severity_ ];
-					// process name
-					out_ << std::setw(PROC_NAME_MAX_LEN + 1) << std::left << proc_name() << ' ';
-					// pid
-					out_ << std::setw(6) << std::left << pid_ << ' ';
-					// thread no
-					out_ << std::setw(4) << std::left << evt.thread_no_ << ' ';
-					// category
-					out_ << std::setw(CATEGORY_MAX_LEN + 1) << evt.category_;
-					// timestamp
-					out_ << evt.timestamp_.date() << ' ' << evt.timestamp_.time_of_day() << ' ';
-					out_ << std::setw(8) << std::left << evt.severity_;
-
-					std::istreambuf_iterator<char> eob;
-					std::istreambuf_iterator<char> bi(&evt.buffer_);
-					std::ostream_iterator<char> out(out_);
-					std::copy(bi, eob, out);
-					if (use_colors)
-						out_ << util::CLEAR;
-					*out++ = '\n';
-					if (flush_stream_)
-						out_.flush();
+			try {
+				{
+					std::unique_lock<std::mutex> lock(mtx_);
+					while (events_.empty() && !finished_) cond_.wait(lock);
 				}
+				bool empty_queue = false;
 				{
 					std::unique_lock<std::mutex> lock(mtx_);
 					empty_queue = events_.empty();
 				}
+				while (!empty_queue) {
+					event_ptr e = events_.front();
+					events_.pop();
+					event_data& evt = *e;
+					std::ostream::sentry s(out_);
+					if (s) {
+						bool use_colors = logger_use_colors;
+						if (use_colors)
+							out_ << severity_colors[ evt.severity_ ];
+						// process name
+						out_ << std::setw(PROC_NAME_MAX_LEN + 1) << std::left << proc_name() << ' ';
+						// pid
+						out_ << std::setw(6) << std::left << pid_ << ' ';
+						// thread no
+						out_ << std::setw(4) << std::left << evt.thread_no_ << ' ';
+						// category
+						out_ << std::setw(CATEGORY_MAX_LEN + 1) << evt.category_;
+						// timestamp
+						out_ << evt.timestamp_.date() << ' ' << evt.timestamp_.time_of_day() << ' ';
+						out_ << std::setw(8) << std::left << evt.severity_;
+
+						std::istreambuf_iterator<char> eob;
+						std::istreambuf_iterator<char> bi(&evt.buffer_);
+						std::ostream_iterator<char> out(out_);
+						std::copy(bi, eob, out);
+						if (use_colors)
+							out_ << util::CLEAR;
+						*out++ = '\n';
+						if (flush_stream_)
+							out_.flush();
+					}
+					{
+						std::unique_lock<std::mutex> lock(mtx_);
+						empty_queue = events_.empty();
+					}
+				}
+			} catch (::std::exception const& e) {
+				auto time = boost::posix_time::microsec_clock::local_time();
+				out_ << time.time_of_day() << " Exception in logging thread: " << e.what() << ::std::cerr;
+			} catch (...) {
+				auto time = boost::posix_time::microsec_clock::local_time();
+				out_ << time.time_of_day() << " Unknown exception in logging thread"<< ::std::cerr;
 			}
 		}
 	}
