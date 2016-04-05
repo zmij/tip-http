@@ -17,14 +17,23 @@ namespace server {
 LOCAL_LOGGING_FACILITY(REQDISP, TRACE);
 
 struct request_dispatcher::impl {
-	typedef std::map< request_method, request_handler_ptr > iri_handlers;
-	typedef std::map< detail::path_matcher, iri_handlers > handler_map_type;
+	using iri_handlers = ::std::map< request_method, handler_closure >;
+	using handler_map_type = ::std::map< detail::path_matcher, iri_handlers >;
 
 	handler_map_type handlers_;
 
 	void
 	add_handler(request_method method, std::string const& path,
 		request_handler_ptr handler)
+	{
+		add_handler(method, path,
+				::std::bind( &request_handler::handle_request, handler,
+						::std::placeholders::_1 ) );
+	}
+
+	void
+	add_handler(request_method method, ::std::string const& path,
+			handler_closure handler)
 	{
 		detail::path_matcher matcher{ path };
 
@@ -36,7 +45,7 @@ struct request_dispatcher::impl {
 		p->second.insert(std::make_pair(method, handler));
 	}
 
-	request_handler_ptr
+	handler_closure
 	get_handler(reply& r)
 	{
 
@@ -61,9 +70,9 @@ struct request_dispatcher::impl {
 	void
 	dispatch_request(reply& r)
 	{
-		request_handler_ptr handler = get_handler(r);
+		handler_closure handler = get_handler(r);
 		if (handler) {
-			handler->handle_request(r);
+			handler(r);
 		}
 	}
 };
@@ -92,6 +101,23 @@ request_dispatcher::add_handler(
 		pimpl_->add_handler(method, path, handler);
 	}
 }
+
+void
+request_dispatcher::add_handler(request_method method, std::string const& path,
+		handler_closure func)
+{
+	pimpl_->add_handler(method, path, func);
+}
+
+void
+request_dispatcher::add_handler(request_method_set methods, std::string const& path,
+		handler_closure func)
+{
+	for (auto method : methods) {
+		pimpl_->add_handler(method, path, func);
+	}
+}
+
 void
 request_dispatcher::get(std::string const& path, request_handler_ptr handler)
 {
