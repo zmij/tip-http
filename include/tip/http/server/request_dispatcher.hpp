@@ -20,7 +20,8 @@ struct request;
 
 class request_dispatcher: public tip::http::server::request_handler {
 public:
-	typedef std::set<request_method> request_method_set;
+	using request_method_set = std::set<request_method>;
+	using handler_closure = ::std::function< void ( reply ) >;
 public:
 	request_dispatcher();
 	virtual ~request_dispatcher();
@@ -55,6 +56,11 @@ public:
 	{
 		add_handler( methods, path, std::make_shared< T >( std::forward(args) ... ) );
 	}
+
+	void
+	add_handler(request_method method, std::string const& path, handler_closure func);
+	void
+	add_handler(request_method_set methods, std::string const& path, handler_closure func);
 
 	void
 	get(std::string const&, request_handler_ptr);
