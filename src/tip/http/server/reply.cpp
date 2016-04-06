@@ -34,6 +34,7 @@ struct reply::impl {
 	response_ptr		resp_;
 	send_response_func 	send_response_;
 	send_error_func		send_error_;
+	finished_func		finished_;
 
 	bool				response_sent_;
 
@@ -99,6 +100,9 @@ struct reply::impl {
 			send_response_(resp_);
 			response_sent_ = true;
 		}
+		if (finished_) {
+			finished_();
+		}
 	}
 	void
 	send_error(response_status status)
@@ -106,6 +110,9 @@ struct reply::impl {
 		if (send_error_) {
 			send_error_(status);
 			response_sent_ = true;
+		}
+		if (finished_) {
+			finished_();
 		}
 	}
 };
@@ -244,6 +251,12 @@ void
 reply::server_error(response_status status)
 {
 	pimpl_->send_error(status);
+}
+
+void
+reply::on_finish(finished_func f)
+{
+	pimpl_->finished_ = f;
 }
 
 detail::context_registry&
