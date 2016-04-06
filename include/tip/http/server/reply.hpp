@@ -35,16 +35,17 @@ class context_registry;
 
 class reply {
 public:
-	typedef std::multimap< std::string, std::string >	query_type;
-	typedef tip::iri::basic_iri< query_type >			iri_type;
-	typedef std::vector< char >							body_type;
+	using query_type			= std::multimap< std::string, std::string >;
+	using iri_type				= tip::iri::basic_iri< query_type >;
+	using body_type				= std::vector< char >;
 
-	typedef body_type::const_iterator					body_input_iterator;
+	using body_input_iterator	= body_type::const_iterator;
 
-	typedef std::function< void(response_const_ptr) >	send_response_func;
-	typedef std::function< void(response_status) > send_error_func;
+	using send_response_func 	= ::std::function< void(response_const_ptr) >;
+	using send_error_func 		= ::std::function< void(response_status) >;
+	using finished_func			= ::std::function< void() >;
 
-	typedef std::shared_ptr< boost::asio::io_service > io_service_ptr;
+	using io_service_ptr 		= std::shared_ptr< boost::asio::io_service >;
 public:
 	reply( io_service_ptr io_service, request_const_ptr req,
 			send_response_func, send_error_func );
@@ -117,6 +118,9 @@ public:
 	std::locale
 	set_locale(std::locale const&);
 	//@}
+
+	void
+	on_finish(finished_func);
 public:
 	class id;
 	class context;
