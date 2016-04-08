@@ -110,8 +110,8 @@ public:
 		return pointer{};
 	}
 
-	void
-	error(reply r, class error const& e) const
+	static void
+	error(reply r, class error const& e)
 	{
 		e.log_error();
 		json_body_context& json = use_context< json_body_context >(r);
