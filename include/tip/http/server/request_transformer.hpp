@@ -69,14 +69,12 @@ struct request_transformer_func {
 	using request_pointer = typename transformer_type::pointer;
 	using prerequisites_type = prereqiusites< Prerequisite ... >;
 
-	request_transformer_func() : prerequisites_{}, transform_{} {}
-
 	void
 	operator()(reply r) const
 	{
 		try {
-			if (prerequisites_(r)) {
-				request_pointer req(transform_(r));
+			if (prerequisites_type{}(r)) {
+				request_pointer req(transformer_type{}(r));
 				handler_type()(r, req);
 			}
 		} catch ( error const& e ) {
@@ -84,10 +82,10 @@ struct request_transformer_func {
 		}
 	}
 protected:
-	void
-	send_error(reply r, error const& e) const
+	static void
+	send_error(reply r, error const& e)
 	{
-		transform_.error(r, e);
+		transformer_type::error(r, e);
 	}
 private:
 	static_type&
@@ -100,9 +98,6 @@ private:
 	{
 		return static_cast<static_type const&>(*this);
 	}
-private:
-	prerequisites_type prerequisites_;
-	transformer_type transform_;
 };
 
 }  // namespace server
