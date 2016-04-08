@@ -118,6 +118,12 @@ request_dispatcher::add_handler(request_method_set methods, std::string const& p
 	}
 }
 
+request_dispatcher::add_handlers_helper
+request_dispatcher::add_handlers()
+{
+	return add_handlers_helper{ shared_this< request_dispatcher >() };
+}
+
 void
 request_dispatcher::get(std::string const& path, request_handler_ptr handler)
 {
@@ -135,6 +141,20 @@ request_dispatcher::do_handle_request(reply r)
 {
 	local_log() << "Dispatch request for " << r.path();
 	pimpl_->dispatch_request(r);
+}
+
+//-----------------------------------------------------------------------------
+request_dispatcher::add_handlers_helper::add_handlers_helper(request_dispatcher_ptr disp)
+	: owner_(disp)
+{
+}
+
+request_dispatcher::add_handlers_helper&
+request_dispatcher::add_handlers_helper::operator ()
+	(request_method method, std::string const& path, handler_closure func)
+{
+	owner_->add_handler(method, path, func);
+	return *this;
 }
 
 } /* namespace server */
