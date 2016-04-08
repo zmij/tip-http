@@ -22,8 +22,8 @@ namespace server {
 
 class json_body_context: public reply::context {
 public:
-	typedef cereal::JSONInputArchive input_arhive_type;
-	typedef cereal::JSONOutputArchive output_archive_type;
+	using input_arhive_type = cereal::JSONInputArchive;
+	using output_archive_type = cereal::JSONOutputArchive;
 
 	enum status_type {
 		empty_body,
@@ -46,7 +46,7 @@ public:
 	outgoing();
 private:
 	struct impl;
-	typedef std::unique_ptr<impl> pimpl;
+	using pimpl = std::unique_ptr<impl>;
 	pimpl pimpl_;
 };
 
@@ -79,8 +79,8 @@ public:
 template < typename T, bool allow_empty_body = false >
 class json_transformer {
 public:
-	typedef T request_type;
-	typedef std::shared_ptr< request_type > pointer;
+	using request_type = T;
+	using pointer = std::shared_ptr< request_type >;
 
 	pointer
 	operator()(reply r) const

@@ -23,6 +23,8 @@ public:
 	using request_method_set = std::set<request_method>;
 	using handler_closure = ::std::function< void ( reply ) >;
 public:
+	class add_handlers_helper;
+public:
 	request_dispatcher();
 	virtual ~request_dispatcher();
 
@@ -62,6 +64,9 @@ public:
 	void
 	add_handler(request_method_set methods, std::string const& path, handler_closure func);
 
+	add_handlers_helper
+	add_handlers();
+
 	void
 	get(std::string const&, request_handler_ptr);
 	void
@@ -76,6 +81,20 @@ private:
 };
 
 typedef std::shared_ptr<request_dispatcher> request_dispatcher_ptr;
+
+class request_dispatcher::add_handlers_helper {
+public:
+	add_handlers_helper(add_handlers_helper const&) = default;
+
+	add_handlers_helper&
+	operator()(request_method method, std::string const& path, handler_closure func);
+private:
+	add_handlers_helper(request_dispatcher_ptr);
+private:
+	friend class request_dispatcher;
+	request_dispatcher_ptr owner_;
+};
+
 
 } /* namespace server */
 } /* namespace http */

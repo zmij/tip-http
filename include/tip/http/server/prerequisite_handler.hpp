@@ -22,7 +22,7 @@ struct prerequisite {
 	enum {
 		index = Index
 	};
-	typedef Prerequisite type;
+	using type = Prerequisite;
 
 	bool
 	operator()(reply r) const
@@ -56,7 +56,7 @@ struct prerequisite_builder< util::indexes_tuple< Indexes ... >, T ... >
 	prerequisite< N, typename util::nth_type< 0, T ... >::type > const&
 	nth() const
 	{
-		typedef prerequisite< N, typename util::nth_type< 0, T ... >::type > nth_prerequisite;
+		using nth_prerequisite = prerequisite< N, typename util::nth_type< 0, T ... >::type >;
 		return static_cast< nth_prerequisite const& >(*this);
 	}
 
@@ -69,8 +69,8 @@ struct prerequisite_builder< util::indexes_tuple< Indexes ... >, T ... >
 
 template < size_t N, typename IndexTuple, typename ... T >
 struct check_helper {
-	typedef prerequisite_builder< IndexTuple, T ... > builder_type;
-	typedef check_helper< N - 1, IndexTuple, T ... > prev_check;
+	using builder_type = prerequisite_builder< IndexTuple, T ... >;
+	using prev_check = check_helper< N - 1, IndexTuple, T ... >;
 	static bool
 	check(builder_type const& b, reply const& r)
 	{
@@ -80,7 +80,7 @@ struct check_helper {
 
 template < typename IndexTuple, typename ... T >
 struct check_helper< 0, IndexTuple, T ... > {
-	typedef prerequisite_builder< IndexTuple, T ... > builder_type;
+	using builder_type = prerequisite_builder< IndexTuple, T ... >;
 	static bool
 	check(builder_type const& b, reply const& r)
 	{
@@ -92,7 +92,7 @@ template < size_t N, typename IndexTuple, typename ... T >
 bool
 check_nth( prerequisite_builder< IndexTuple, T ... > const& builder, reply const& r )
 {
-	typedef check_helper< N, IndexTuple, T ... > check;
+	using check = check_helper< N, IndexTuple, T ... >;
 	return check::check(builder, r);
 }
 
@@ -122,7 +122,7 @@ public:
 template < typename ... Prerequisite >
 class prerequisite_handler : public request_handler {
 private:
-	typedef prereqiusites< Prerequisite ... > prerequisites_type;
+	using prerequisites_type = prereqiusites< Prerequisite ... >;
 public:
 	prerequisite_handler() {}
 	virtual ~prerequisite_handler() {}
@@ -149,6 +149,15 @@ private:
 private:
 	prerequisites_type prerequisites_;
 };
+
+//template < typename T, typename ... Prerequisites >
+//struct prereqisite_handler_func {
+//	using static_type = T;
+//	using prerequisites_type = prereqiusites< Prerequisite ... >;
+//
+//private:
+//	prerequisites_type prerequisites_;
+//};
 
 }  // namespace server
 }  // namespace http

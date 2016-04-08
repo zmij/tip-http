@@ -27,10 +27,10 @@ namespace server {
 template < typename Transformer, typename ... Prerequisite >
 class request_transformer : public request_handler {
 public:
-	typedef Transformer								transformer_type;
-	typedef typename transformer_type::request_type	request_type;
-	typedef typename transformer_type::pointer      request_pointer;
-	typedef prereqiusites< Prerequisite ... >		prerequisites_type;
+	using transformer_type = Transformer;
+	using request_type = typename transformer_type::request_type;
+	using request_pointer = typename transformer_type::pointer;
+	using prerequisites_type = prereqiusites< Prerequisite ... >;
 public:
 	request_transformer() : transform_() {}
 	virtual ~request_transformer() {}
@@ -58,6 +58,50 @@ private:
 private:
 	transformer_type transform_;
 	prerequisites_type prerequisites_;
+};
+
+template < typename T, typename Transformer, typename ... Prerequisite >
+struct request_transformer_func {
+	using static_type = T;
+	using transformer_type = Transformer;
+	using request_type = typename transformer_type::request_type;
+	using request_pointer = typename transformer_type::pointer;
+	using prerequisites_type = prereqiusites< Prerequisite ... >;
+
+	request_transformer_func() : prerequisites_{}, transform_{} {}
+
+	void
+	operator()(reply r) const
+	{
+		try {
+			if (prerequisites_(r)) {
+				request_pointer req(transform_(r));
+				handler_type()(r, req);
+			}
+		} catch ( error const& e ) {
+			send_error(r, e);
+		}
+	}
+protected:
+	void
+	send_error(reply r, error const& e) const
+	{
+		transform_.error(r, e);
+	}
+private:
+	static_type&
+	hanlder_type()
+	{
+		return static_cast<static_type&>(*this);
+	}
+	static_type const&
+	handler_type() const
+	{
+		return static_cast<static_type const&>(*this);
+	}
+private:
+	prerequisites_type prerequisites_;
+	transformer_type transform_;
 };
 
 }  // namespace server
