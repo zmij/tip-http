@@ -62,6 +62,7 @@ private:
 
 template < typename T, typename Transformer, typename ... Prerequisite >
 struct request_transformer_func {
+	using base_type = request_transformer_func< T, Transformer, Prerequisite ... >;
 	using static_type = T;
 	using transformer_type = Transformer;
 	using request_type = typename transformer_type::request_type;
