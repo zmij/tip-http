@@ -18,53 +18,53 @@ namespace tip {
 namespace http {
 
 class response;
-typedef std::shared_ptr< response > response_ptr;
+using response_ptr      = std::shared_ptr< response >;
 
 namespace client {
 
 class session;
-typedef std::shared_ptr< session > session_ptr;
-typedef std::weak_ptr< session > session_weak_ptr;
+using session_ptr       = std::shared_ptr< session >;
+using session_weak_ptr  = std::weak_ptr< session >;
 
 class session : boost::noncopyable {
 public:
-	typedef boost::asio::io_service io_service;
-	typedef std::vector<char> body_type;
-	typedef std::function< void(request_ptr, response_ptr) > response_callback;
-	typedef std::function< void(std::exception_ptr) > error_callback;
-	typedef std::function< void(session_ptr) > session_callback;
+    using io_service        = boost::asio::io_service;
+    using body_type         = std::vector<char>;
+    using response_callback = std::function< void(request_ptr, response_ptr) >;
+    using error_callback    = std::function< void(std::exception_ptr) >;
+    using session_callback  = std::function< void(session_ptr) >;
 public:
-	virtual ~session();
+    virtual ~session();
 
-	void
-	send_request(request_method method, request::iri_type const&,
-			body_type const&, response_callback cb, error_callback ecb);
-	void
-	send_request(request_method method, request::iri_type const&,
-			body_type&&, response_callback cb, error_callback ecb);
-	void
-	send_request(request_ptr req, response_callback cb, error_callback ecb);
+    void
+    send_request(request_method method, request::iri_type const&,
+            body_type const&, response_callback cb, error_callback ecb);
+    void
+    send_request(request_method method, request::iri_type const&,
+            body_type&&, response_callback cb, error_callback ecb);
+    void
+    send_request(request_ptr req, response_callback cb, error_callback ecb);
 
-	void
-	close();
+    void
+    close();
 
-	static session_ptr
-	create(io_service& svc, request::iri_type const&, session_callback on_close,
-			headers const& default_headers);
+    static session_ptr
+    create(io_service& svc, request::iri_type const&, session_callback on_close,
+            headers const& default_headers);
 protected:
-	session();
+    session();
 
-	virtual void
-	do_send_request(request_method method, request::iri_type const&,
-			body_type const&, response_callback cb, error_callback) = 0;
-	virtual void
-	do_send_request(request_method method, request::iri_type const&,
-			body_type&&, response_callback cb, error_callback) = 0;
-	virtual void
-	do_send_request(request_ptr req, response_callback cb, error_callback) = 0;
+    virtual void
+    do_send_request(request_method method, request::iri_type const&,
+            body_type const&, response_callback cb, error_callback) = 0;
+    virtual void
+    do_send_request(request_method method, request::iri_type const&,
+            body_type&&, response_callback cb, error_callback) = 0;
+    virtual void
+    do_send_request(request_ptr req, response_callback cb, error_callback) = 0;
 
-	virtual void
-	do_close() = 0;
+    virtual void
+    do_close() = 0;
 };
 
 } /* namespace client */

@@ -17,41 +17,41 @@ namespace tip {
 namespace http {
 
 class response;
-typedef std::shared_ptr< response > response_ptr;
-typedef std::function< void(response_ptr) > response_callback;
-typedef std::function< void(std::exception_ptr) > error_callback;
+using response_ptr      = std::shared_ptr< response >;
+using response_callback = std::function< void(response_ptr) >;
+using error_callback    = std::function< void(std::exception_ptr) >;
 
 namespace client {
 
 class service : public boost::asio::io_service::service {
 public:
-	typedef boost::asio::io_service::service base_type;
-	typedef boost::asio::io_service io_service;
-	typedef std::vector<char> body_type;
+    using base_type     = boost::asio::io_service::service;
+    using io_service    = boost::asio::io_service;
+    using body_type     = std::vector<char>;
 public:
-	static io_service::id id;
+    static io_service::id id;
 public:
-	service(io_service& owner);
-	virtual ~service();
+    service(io_service& owner);
+    virtual ~service();
 
-	void
-	set_defaults(headers const& h);
+    void
+    set_defaults(headers const& h);
 
-	void
-	get(std::string const& url, response_callback, error_callback = nullptr);
-	void
-	post(std::string const& url, body_type const& body, response_callback,
-			error_callback = nullptr);
-	void
-	post(std::string const& url, body_type&& body, response_callback,
-			error_callback = nullptr);
+    void
+    get(std::string const& url, response_callback, error_callback = nullptr);
+    void
+    post(std::string const& url, body_type const& body, response_callback,
+            error_callback = nullptr);
+    void
+    post(std::string const& url, body_type&& body, response_callback,
+            error_callback = nullptr);
 private:
-	virtual void
-	shutdown_service();
+    virtual void
+    shutdown_service();
 private:
-	struct impl;
-	typedef std::shared_ptr< impl > pimpl;
-	pimpl pimpl_;
+    struct impl;
+    using pimpl = std::shared_ptr< impl >;
+    pimpl pimpl_;
 };
 
 } /* namespace client */
