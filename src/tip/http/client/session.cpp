@@ -307,6 +307,10 @@ struct session_fsm_ :
             operator()(events::response const& resp, FSM&, wait_response& resp_state,
                     TargetState&)
             {
+                local_log() << "Reply to "
+                        << resp_state.req_.request_->method
+                        << " " << resp_state.req_.request_->path
+                        << " " << resp.response_->status;
                 if (resp_state.req_.success_) {
                     try {
                         resp_state.req_.success_(resp_state.req_.request_, resp.response_);
@@ -318,6 +322,8 @@ struct session_fsm_ :
                         local_log(logger::ERROR)
                                 << "Response handler throwed an unexpected exception";
                     }
+                } else {
+                    local_log(logger::WARNING) << "No response callback";
                 }
                 resp_state.req_ = events::request{};
             }
@@ -327,7 +333,7 @@ struct session_fsm_ :
             /*        Start            Event                Next            Action            Guard          */
             /*  +-----------------+-------------------+---------------+---------------+-------------+ */
             Row <    wait_request,    events::request,    wait_response,    send_request,    none        >,
-            Row <    wait_response,   events::response,    wait_request,    process_reply,    none        >
+            Row <    wait_response,   events::response,   wait_request,     process_reply,    none        >
         > {};
 
         online_() : session_(nullptr) {}
@@ -488,6 +494,10 @@ struct session_fsm_ :
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
+
+        local_log() << "Send "<< req.method << " " << scheme_ << "://" << host_
+                << req.path;
+
         buffer_ptr outgoing = std::make_shared<buffer_type>();
         std::ostream os(outgoing.get());
         os << req;
@@ -532,6 +542,8 @@ struct session_fsm_ :
                 local_log(logger::ERROR) << "Failed to parse response headers";
             }
         } else {
+            local_log() << "Request to " << scheme_ << "://" << host_
+                    << " connection dropped before headers read";
             fsm().process_event(events::transport_error{
                 ::std::make_exception_ptr(errors::http_client_error{ec.message()})
             });
@@ -545,12 +557,18 @@ struct session_fsm_ :
         using std::placeholders::_2;
         if (res.result) {
             // success read
+            local_log() << "Request to " << scheme_ << "://" << host_
+                    << " successfully read response body";
             fsm().process_event( events::response{ resp } );
         } else if (!res.result) {
             // failed to read body
+            local_log() << "Request to " << scheme_ << "://" << host_
+                    << " failed read response body";
             fsm().process_event( events::response{ resp } );
         } else if (res.callback) {
                 // need more data
+                local_log() << "Request to " << scheme_ << "://" << host_
+                        << " need more data to read body";
                 boost::asio::async_read(transport_.socket_,
                         incoming_,
                         boost::asio::transfer_at_least(1),
@@ -577,6 +595,8 @@ struct session_fsm_ :
                 local_log(logger::WARNING) << "No callback for reading body";
             }
         } else {
+            local_log() << "Request to " << scheme_ << "://" << host_
+                    << " dropped connect before body read";
             fsm().process_event(events::transport_error{
                 ::std::make_exception_ptr(errors::http_client_error{ec.message()})
             });

@@ -99,6 +99,15 @@ struct service::impl : std::enable_shared_from_this<impl> {
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
+        if (!cb) {
+            local_log(logger::WARNING) << method << " " << iri.scheme << "://"
+                    << iri.authority.host << ": No result callback ";
+            return;
+        }
+        if (!ecb) {
+            local_log(logger::WARNING) << method << " " << iri.scheme << "://"
+                    << iri.authority.host << ": No error callback ";
+        }
         try {
             session_ptr s = get_session(iri);
             s->send_request(method, iri, body,
@@ -117,6 +126,15 @@ struct service::impl : std::enable_shared_from_this<impl> {
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
+        if (!cb) {
+            local_log(logger::WARNING) << method << " " << iri.scheme << "://"
+                    << iri.authority.host << ": No result callback ";
+            return;
+        }
+        if (!ecb) {
+            local_log(logger::WARNING) << method << " " << iri.scheme << "://"
+                    << iri.authority.host << ": No error callback ";
+        }
         try {
             session_ptr s = get_session(iri);
             s->send_request(method, iri, std::move(body),
@@ -169,6 +187,8 @@ struct service::impl : std::enable_shared_from_this<impl> {
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
+        local_log() << req->method << " " << "://" << req->host() << req->path
+                << " " << resp->status << " " << resp->status_line;
         response_class r_class = status_class(resp->status);
         if (r_class == response_class::redirection) {
             // Handle redirect

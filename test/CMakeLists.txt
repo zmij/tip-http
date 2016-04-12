@@ -1,7 +1,7 @@
-#	/awm-server/lib/http/test/CMakeLists.txt
-#	
-#	@author zmij
-#	@date Dec 30, 2015
+#    /awm-server/lib/http/test/CMakeLists.txt
+#
+#    @author zmij
+#    @date Dec 30, 2015
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -57,7 +57,7 @@ configure_file(config.in.hpp config.hpp)
 # Test binaries
 # HTTP Common test
 set(
-    test_http_common_SRCS 
+    test_http_common_SRCS
     grammar_experiments.cpp
     generate_tests.cpp
     base64_test.cpp
@@ -72,6 +72,7 @@ set(
     header_fields_parse_test.cpp
     response_body_test.cpp
     prereq_handler_test.cpp
+    misc_tests.cpp
     test-main.cpp
 )
 add_executable(test-http-common ${test_http_common_SRCS})
