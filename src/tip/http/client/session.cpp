@@ -277,10 +277,22 @@ struct session_fsm_ :
             void
             on_entry(Event const&, FSM&)
             { local_log() << "entering wait_response"; }
+
             template < typename Event, typename FSM >
             void
             on_exit(Event const&, FSM&)
             { local_log() << "exiting wait_response"; }
+
+            template < typename FSM >
+            void
+            on_exit(events::transport_error const& evt, FSM&)
+            {
+                local_log() << "exiting wait_response (on error)";
+                if (req_.fail_) {
+                    req_.fail_(evt.error);
+                }
+                req_ = events::request{};
+            }
             typedef boost::mpl::vector<
                 events::request
             > deferred_events;
@@ -542,7 +554,7 @@ struct session_fsm_ :
                 local_log(logger::ERROR) << "Failed to parse response headers";
             }
         } else {
-            local_log() << "Request to " << scheme_ << "://" << host_
+            local_log(logger::DEBUG) << "Request to " << scheme_ << "://" << host_
                     << " connection dropped before headers read";
             fsm().process_event(events::transport_error{
                 ::std::make_exception_ptr(errors::http_client_error{ec.message()})
