@@ -109,10 +109,9 @@ TEST(HttpsClient, FailVerifyCert)
 
 TEST(HttpsClient, VerifyCertOK)
 {
-    using http_service = tip::http::client::service;
+    using http_service = service;
     using ssl_service = tip::ssl::ssl_context_service;
 
-    using tip::http::response_ptr;
     boost::asio::io_service io_service;
     ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(io_service);
     ssl_svc.context().set_default_verify_paths();
@@ -120,6 +119,32 @@ TEST(HttpsClient, VerifyCertOK)
     response_ptr resp;
     bool error = false;
     svc.get("https://mail.ru/",
+    [&](response_ptr r){
+        local_log() << "Received a response: Content-Length: "
+                << r->content_length() << " body size " << r->body_.size();
+        resp = r;
+    },
+    [&](std::exception_ptr) {
+            error = true;
+    });
+    io_service.run();
+    EXPECT_TRUE(resp.get());
+    EXPECT_FALSE(error);
+}
+
+TEST(HttpsClient, GetAppleCert)
+{
+    using http_service = service;
+    using ssl_service = tip::ssl::ssl_context_service;
+
+    boost::asio::io_service io_service;
+    ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(io_service);
+    ssl_svc.context().set_default_verify_paths();
+    http_service& svc = boost::asio::use_service< http_service >(io_service);
+
+    response_ptr resp;
+    bool error = false;
+    svc.get("https://static.gc.apple.com/public-key/ggc-prod-2.cer",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
