@@ -34,7 +34,7 @@ const std::set< iri::scheme > SUPPORTED_SCHEMES { HTTP_SCHEME, HTTPS_SCHEME };
 }  // namespace
 
 struct service::impl : std::enable_shared_from_this<impl> {
-    using connection_id     = ::std::pair< iri::host, std::string >;
+    using connection_id     = session::connection_id;
     // TODO multiple sessions per host
     using session_container = ::std::map< connection_id, session_ptr >;
     using mutex_type        = ::std::mutex;
@@ -143,10 +143,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
             local_log(logger::ERROR) << "Host is empty";
             throw std::runtime_error("Host is empty");
         }
-        connection_id cid{ iri.authority.host,
-            iri.authority.port.empty() ?
-                    static_cast<std::string const&>(iri.scheme) :
-                    static_cast<std::string const&>(iri.authority.port) };
+        connection_id cid = session::create_connection_id(iri);
 
         lock_type lock(mtx_);
         auto f = sessions_.find(cid);

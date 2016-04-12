@@ -7,22 +7,27 @@
 
 #include <gtest/gtest.h>
 #include <tip/http/client/service.hpp>
+#include <tip/http/client/session.hpp>
 #include <tip/http/common/response.hpp>
 #include <tip/ssl_context_service.hpp>
 #include <tip/log.hpp>
+
+namespace tip {
+namespace http {
+namespace client {
+namespace test {
 
 LOCAL_LOGGING_FACILITY(CLIENTTEST, TRACE);
 
 TEST(HttpClient, ServiceGet)
 {
     boost::asio::io_service io_service;
-    ASSERT_NO_THROW( boost::asio::use_service< tip::http::client::service >(io_service) );
+    ASSERT_NO_THROW( boost::asio::use_service< service >(io_service) );
 }
 
 TEST(HttpClient, GetRequest)
 {
-    typedef tip::http::client::service http_service;
-    using tip::http::response_ptr;
+    using http_service = service;
     boost::asio::io_service io_service;
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
@@ -44,8 +49,7 @@ TEST(HttpClient, GetRequest)
 
 TEST(HttpClient, FailConnecting)
 {
-    typedef tip::http::client::service http_service;
-    using tip::http::response_ptr;
+    using http_service = service;
     boost::asio::io_service io_service;
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
@@ -66,10 +70,24 @@ TEST(HttpClient, FailConnecting)
     EXPECT_TRUE(error);
 }
 
+TEST(HttpClient, NoEventQueue)
+{
+    boost::asio::io_service io_service;
+    request::iri_type iri;
+    ASSERT_TRUE(request::parse_iri("http://127.0.0.1:65535", iri));
+
+    bool session_closed = false;
+
+    session_ptr session = session::create(io_service, iri,
+            [&session_closed](session_ptr s){ session_closed = true; }, {});
+
+    io_service.run();
+    EXPECT_TRUE(session_closed);
+}
 
 TEST(HttpsClient, FailVerifyCert)
 {
-    typedef tip::http::client::service http_service;
+    using http_service = tip::http::client::service;
     using tip::http::response_ptr;
     boost::asio::io_service io_service;
     http_service& svc = boost::asio::use_service< http_service >(io_service);
@@ -91,8 +109,8 @@ TEST(HttpsClient, FailVerifyCert)
 
 TEST(HttpsClient, VerifyCertOK)
 {
-    typedef tip::http::client::service http_service;
-    typedef tip::ssl::ssl_context_service ssl_service;
+    using http_service = tip::http::client::service;
+    using ssl_service = tip::ssl::ssl_context_service;
 
     using tip::http::response_ptr;
     boost::asio::io_service io_service;
@@ -114,3 +132,9 @@ TEST(HttpsClient, VerifyCertOK)
     EXPECT_TRUE(resp.get());
     EXPECT_FALSE(error);
 }
+
+}  // namespace test
+}  // namespace client
+}  // namespace http
+}  // namespace tip
+
