@@ -42,15 +42,12 @@ struct tcp_transport {
     tcp::resolver resolver_;
     socket_type socket_;
 
-    tcp_transport(io_service& io_service, request::iri_type const& iri,
+    tcp_transport(io_service& io_service, session::connection_id const& conn_id,
             connect_callback cb) :
             resolver_(io_service), socket_(io_service)
     {
-        std::string host = static_cast<std::string const&>(iri.authority.host);
-        std::string svc = iri.authority.port.empty() ?
-                static_cast<std::string const&>(iri.scheme) :
-                static_cast<std::string const&>(iri.authority.port);
-        tcp::resolver::query qry(host, svc);
+        tcp::resolver::query
+            qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
         resolver_.async_resolve(qry, std::bind(
             &tcp_transport::handle_resolve, this,
                 std::placeholders::_1, std::placeholders::_2, cb
@@ -102,16 +99,13 @@ struct ssl_transport {
     tcp::resolver resolver_;
     socket_type socket_;
 
-    ssl_transport(io_service& io_service, request::iri_type const& iri, connect_callback cb) :
+    ssl_transport(io_service& io_service, session::connection_id const& conn_id, connect_callback cb) :
         resolver_(io_service),
         socket_( io_service,
                 boost::asio::use_service<tip::ssl::ssl_context_service>(io_service).context() )
     {
-        std::string host = static_cast<std::string const&>(iri.authority.host);
-        std::string svc = iri.authority.port.empty() ?
-                static_cast<std::string const&>(iri.scheme) :
-                static_cast<std::string const&>(iri.authority.port);
-        tcp::resolver::query qry(host, svc);
+        tcp::resolver::query
+            qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
         resolver_.async_resolve(qry, std::bind(
             &ssl_transport::handle_resolve, this,
                 std::placeholders::_1, std::placeholders::_2, cb
@@ -410,14 +404,31 @@ struct session_fsm_ :
     };
     //@}
     //@{
+    /** @name Guards */
+    struct events_pending {
+        template < class EVT, class SourceState, class TargetState>
+        bool
+        operator()(EVT const&, session_fsm& fsm, SourceState&, TargetState&)
+        {
+            return !fsm.get_deferred_queue().empty();
+        }
+    };
+    //@}
+    //@{
     struct transition_table : boost::mpl::vector<
         /*        Start            Event                    Next            Action                        Guard                  */
         /*  +-----------------+-----------------------+---------------+---------------------------+---------------------+ */
         Row <    unplugged,         events::connected,  online,             none,                        none                >,
+        /* Transport errors */
         Row <    unplugged,         events::
-                                    transport_error,    connection_failed,  none,                        none                >,
+                                    transport_error,    connection_failed,  none,                        events_pending      >,
+        Row <    unplugged,         events::
+                                    transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
         Row <    online,            events::
-                                    transport_error,    connection_failed,  none,                        none                >,
+                                    transport_error,    connection_failed,  none,                        events_pending      >,
+        Row <    online,            events::
+                                    transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
+        /* Disconnect */
         Row <    unplugged,         events::disconnect, terminated,         none,                        none                >,
         Row <    online,            events::disconnect, terminated,         disconnect_transport,        none                >,
         Row <    connection_failed, events::disconnect, terminated,         none,                        none                >
@@ -441,7 +452,7 @@ struct session_fsm_ :
     session_fsm_(io_service& io_service, request::iri_type const& iri,
             session::session_callback on_close, headers const& default_headers) :
         strand_(io_service),
-        transport_(io_service, iri,
+        transport_(io_service, session::create_connection_id(iri),
             strand_.wrap(
                 std::bind( &session_fsm_::handle_connect,
                         this, std::placeholders::_1 ))),
@@ -701,6 +712,15 @@ session::create(io_service& svc, request::iri_type const& iri,
     }
     // TODO Throw an exception
     return session_ptr();
+}
+
+session::connection_id
+session::create_connection_id(request::iri_type const& iri)
+{
+    return ::std::make_pair( iri.authority.host, (
+            iri.authority.port.empty() ?
+                    static_cast<std::string const&>(iri.scheme) :
+                    static_cast<std::string const&>(iri.authority.port) ) );
 }
 
 

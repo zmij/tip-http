@@ -18,21 +18,22 @@ namespace tip {
 namespace http {
 
 class response;
-using response_ptr      = std::shared_ptr< response >;
+using response_ptr      = ::std::shared_ptr< response >;
 
 namespace client {
 
 class session;
-using session_ptr       = std::shared_ptr< session >;
-using session_weak_ptr  = std::weak_ptr< session >;
+using session_ptr       = ::std::shared_ptr< session >;
+using session_weak_ptr  = ::std::weak_ptr< session >;
 
 class session : boost::noncopyable {
 public:
     using io_service        = boost::asio::io_service;
-    using body_type         = std::vector<char>;
-    using response_callback = std::function< void(request_ptr, response_ptr) >;
-    using error_callback    = std::function< void(std::exception_ptr) >;
-    using session_callback  = std::function< void(session_ptr) >;
+    using body_type         = ::std::vector<char>;
+    using response_callback = ::std::function< void(request_ptr, response_ptr) >;
+    using error_callback    = ::std::function< void(::std::exception_ptr) >;
+    using session_callback  = ::std::function< void(session_ptr) >;
+    using connection_id     = ::std::pair< iri::host, ::std::string >;
 public:
     virtual ~session();
 
@@ -51,6 +52,9 @@ public:
     static session_ptr
     create(io_service& svc, request::iri_type const&, session_callback on_close,
             headers const& default_headers);
+
+    static connection_id
+    create_connection_id(request::iri_type const&);
 protected:
     session();
 
