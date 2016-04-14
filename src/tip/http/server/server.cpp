@@ -83,15 +83,16 @@ server::server(io_service_ptr io_svc,
 
 void server::run()
 {
-	// Create a pool of threads to run all of the io_services.
+    typedef tip::ssl::ssl_context_service ssl_service;
+    ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(*io_service_);
+    ssl_svc.context().set_default_verify_paths();
+
+    // Create a pool of threads to run all of the io_services.
 	std::vector< std::shared_ptr< std::thread > > threads;
 	for (std::size_t i = 0; i < thread_pool_size_; ++i) {
 		std::shared_ptr< std::thread > thread(
 		new std::thread([&](){
 			try {
-				typedef tip::ssl::ssl_context_service ssl_service;
-				ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(*io_service_);
-				ssl_svc.context().set_default_verify_paths();
 				io_service_->run();
 			} catch (std::exception const& e) {
 				local_log(logger::ERROR) << "Uncaught exception " << e.what();
