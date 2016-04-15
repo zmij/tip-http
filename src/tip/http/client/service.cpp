@@ -12,7 +12,7 @@
 #include <map>
 #include <mutex>
 
-#include <tip/http/client/session.hpp>
+#include <tip/http/client/session_pool.hpp>
 #include <tip/http/client/errors.hpp>
 #include <tip/http/common/response.hpp>
 
@@ -40,13 +40,16 @@ struct service::impl : std::enable_shared_from_this<impl> {
     using mutex_type        = ::std::mutex;
     using lock_type         = ::std::lock_guard< mutex_type >;
 
-    io_service&             owner_;
-    headers                 default_headers_;
-    session_container       sessions_;
-    mutex_type              mtx_;
+    io_service&                     owner_;
+    headers                         default_headers_;
+    session_container               sessions_;
+    mutex_type                      mtx_;
+
+    ::std::atomic<::std::size_t>    max_sessions_;
 
     impl(io_service& owner, headers const& default_headers) :
-        owner_(owner), default_headers_(default_headers)
+        owner_(owner), default_headers_(default_headers),
+        max_sessions_{ DEFAULT_MAX_SESSIONS }
     {
     }
 
@@ -175,10 +178,12 @@ struct service::impl : std::enable_shared_from_this<impl> {
     session_ptr
     create_session(request::iri_type const& iri)
     {
-        return session::create(owner_, iri,
-                ::std::bind(&impl::session_closed,
-                        shared_from_this(), std::placeholders::_1),
-                default_headers_);
+        return session_pool::create(
+            owner_, iri,
+            ::std::bind(&impl::session_closed,
+                    shared_from_this(), std::placeholders::_1),
+            default_headers_, max_sessions_
+        );
     }
 
     void
@@ -264,6 +269,12 @@ service::service(io_service& owner) :
 
 service::~service()
 {
+}
+
+void
+service::set_max_concurrent_sessions(::std::size_t m)
+{
+    pimpl_->max_sessions_ = m;
 }
 
 void

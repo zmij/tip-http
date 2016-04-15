@@ -23,6 +23,8 @@ using error_callback    = std::function< void(std::exception_ptr) >;
 
 namespace client {
 
+const ::std::size_t DEFAULT_MAX_SESSIONS = 4;
+
 class service : public boost::asio::io_service::service {
 public:
     using base_type     = boost::asio::io_service::service;
@@ -36,6 +38,8 @@ public:
 
     void
     set_defaults(headers const& h);
+    void
+    set_max_concurrent_sessions(::std::size_t);
 
     void
     get(std::string const& url, response_callback, error_callback = nullptr);
