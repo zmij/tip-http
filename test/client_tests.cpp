@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <tip/http/client/service.hpp>
 #include <tip/http/client/session.hpp>
+#include <tip/http/client/session_pool.hpp>
 #include <tip/http/common/response.hpp>
 #include <tip/ssl_context_service.hpp>
 #include <tip/log.hpp>
@@ -24,6 +25,74 @@ TEST(HttpClient, ServiceGet)
     boost::asio::io_service io_service;
     ASSERT_NO_THROW( boost::asio::use_service< service >(io_service) );
 }
+
+TEST(HttpClient, NoEventQueue)
+{
+    boost::asio::io_service io_service;
+    request::iri_type iri;
+    ASSERT_TRUE(request::parse_iri("http://127.0.0.1:65535", iri));
+
+    bool session_closed = false;
+
+    session_ptr session = session::create(io_service, iri,
+            [](session_ptr s){ local_log() << "Session idle"; },
+            [&session_closed](session_ptr s, ::std::exception_ptr e)
+                { session_closed = true; }, {});
+
+    io_service.run();
+    EXPECT_TRUE(session_closed);
+}
+
+TEST(HttpClient, Session)
+{
+    boost::asio::io_service io_service;
+    request::iri_type iri;
+    ASSERT_TRUE(request::parse_iri("http://google.com/", iri));
+
+    bool session_closed = false;
+    response_ptr resp;
+
+    session_ptr session = session::create(io_service, iri,
+            [](session_ptr s){ local_log() << "Session idle"; },
+            [&session_closed](session_ptr s, ::std::exception_ptr e)
+                { session_closed = true; }, {});
+
+    session->send_request(request::create(GET, iri, {}),
+    [&](request_ptr, response_ptr r){
+        local_log() << "Received a response: Content-Length: "
+                << r->content_length() << " body size " << r->body_.size()
+                << "\nHeaders\n"
+                << r->headers_;
+        resp = r;
+        session->close();
+    },
+    [](std::exception_ptr) {});
+
+    io_service.run();
+    EXPECT_TRUE(session_closed);
+    ASSERT_TRUE(resp.get());
+    EXPECT_LT(0, resp->body_.size());
+}
+
+TEST(HttpClient, SessionPool)
+{
+    boost::asio::io_service io_service;
+    request::iri_type iri;
+    ASSERT_TRUE(request::parse_iri("http://google.com/", iri));
+
+    auto pool = session_pool::create(io_service, iri,
+    [](session_ptr s){
+        local_log() << "Connection pool closed";
+    }, {}, 1);
+    pool->send_request(request::create(GET, iri, {}),
+    [](request_ptr, response_ptr){},
+    [](std::exception_ptr) {});
+
+    EXPECT_TRUE(pool.get());
+    local_log(logger::DEBUG) << "Start io_service";
+    io_service.run();
+}
+
 
 TEST(HttpClient, GetRequest)
 {
@@ -70,21 +139,6 @@ TEST(HttpClient, FailConnecting)
     EXPECT_TRUE(error);
 }
 
-TEST(HttpClient, NoEventQueue)
-{
-    boost::asio::io_service io_service;
-    request::iri_type iri;
-    ASSERT_TRUE(request::parse_iri("http://127.0.0.1:65535", iri));
-
-    bool session_closed = false;
-
-    session_ptr session = session::create(io_service, iri,
-            [&session_closed](session_ptr s){ session_closed = true; }, {});
-
-    io_service.run();
-    EXPECT_TRUE(session_closed);
-}
-
 TEST(HttpsClient, FailVerifyCert)
 {
     using http_service = tip::http::client::service;
@@ -121,7 +175,9 @@ TEST(HttpsClient, VerifyCertOK)
     svc.get("https://mail.ru/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
-                << r->content_length() << " body size " << r->body_.size();
+                << r->content_length() << " body size " << r->body_.size()
+                << "\nHeaders\n"
+                << r->headers_;
         resp = r;
     },
     [&](std::exception_ptr) {
@@ -147,7 +203,9 @@ TEST(HttpsClient, GetAppleCert)
     svc.get("https://static.gc.apple.com/public-key/ggc-prod-2.cer",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
-                << r->content_length() << " body size " << r->body_.size();
+                << r->content_length() << " body size " << r->body_.size()
+                << "\nHeaders\n"
+                << r->headers_;
         resp = r;
     },
     [&](std::exception_ptr) {
