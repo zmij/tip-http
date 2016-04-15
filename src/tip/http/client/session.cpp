@@ -214,12 +214,12 @@ struct session_fsm_ :
     //@{
     /** @name Aliases for MSM types */
     template < typename ... T >
-    using Row                   = boost::msm::front::Row< T ... >;
+    using Row = boost::msm::front::Row< T ... >;
     template < typename ... T >
-    using Internal              = boost::msm::front::Internal< T ... >;
+    using Internal = boost::msm::front::Internal< T ... >;
     using none                  = boost::msm::front::none;
     template < typename T >
-    using Not                   = boost::msm::front::euml::Not_< T >;
+    using Not = boost::msm::front::euml::Not_< T >;
     //@}
 
     //@{
@@ -347,7 +347,7 @@ struct session_fsm_ :
             /*        Start            Event                Next            Action            Guard          */
             /*  +-----------------+-------------------+---------------+---------------+-------------+ */
             Row <    wait_request,    events::request,    wait_response,    send_request,    none        >,
-            Row <    wait_response,   events::response,   wait_request,     process_reply,    none        >
+            Row <    wait_response,   events::response,   wait_request,     process_reply,   none        >
         > {};
 
         online_() : session_(nullptr) {}
@@ -393,7 +393,7 @@ struct session_fsm_ :
                 }
                 if (fsm.get_deferred_queue().empty()) {
                     fsm.enqueue_event( events::disconnect{} );
-                }
+            }
             }
         };
         struct internal_transition_table : ::boost::mpl::vector<
@@ -444,9 +444,9 @@ struct session_fsm_ :
     struct transition_table : boost::mpl::vector<
         /*        Start            Event                    Next            Action                        Guard                  */
         /*  +-----------------+-----------------------+---------------+---------------------------+---------------------+ */
-        Row <    unplugged,         events::connected,  online,             none,                        none                >,
+        Row <    unplugged,        events::connected,        online,            none,                        none                >,
         /* Transport errors */
-        Row <    unplugged,         events::
+        Row <    unplugged,        events::
                                     transport_error,    connection_failed,  none,                        events_pending      >,
         Row <    unplugged,         events::
                                     transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
@@ -455,8 +455,8 @@ struct session_fsm_ :
         Row <    online,            events::
                                     transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
         /* Disconnect */
-        Row <    unplugged,         events::disconnect, terminated,         none,                        none                >,
-        Row <    online,            events::disconnect, terminated,         disconnect_transport,        none                >,
+        Row <    unplugged,        events::disconnect,        terminated,        none,                        none                >,
+        Row <    online,            events::disconnect,        terminated,        disconnect_transport,        none                >,
         Row <    connection_failed, events::disconnect, terminated,         none,                        none                >
     >{};
 
@@ -608,9 +608,9 @@ struct session_fsm_ :
     {
         if (!ec) {
             if (cb) {
-                std::istream is(&incoming_);
-                read_body(resp, cb(is));
-            } else {
+            std::istream is(&incoming_);
+            read_body(resp, cb(is));
+        } else {
                 local_log(logger::WARNING) << "No callback for reading body";
             }
         } else {
@@ -661,12 +661,12 @@ private:
         return static_cast< session_fsm const& >(*this);
     }
 private:
-    boost::asio::io_service::strand strand_;
-    transport_type                  transport_;
-    iri::host                       host_;
-    iri::scheme                     scheme_;
-    buffer_type                     incoming_;
-    headers                         default_headers_;
+    boost::asio::io_service::strand    strand_;
+    transport_type                    transport_;
+    iri::host                        host_;
+    iri::scheme                        scheme_;
+    buffer_type                        incoming_;
+    headers                            default_headers_;
 
     session::session_callback       on_idle_;
     session::session_error          on_close_;
