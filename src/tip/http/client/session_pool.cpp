@@ -23,9 +23,9 @@ enum request_fields {
 session_pool::session_pool(io_service& svc, request::iri_type const& iri,
         session_callback on_close, headers const& default_headers,
         ::std::size_t max_sessions)
-    : svc_{svc}, iri_{iri}, default_headers_{default_headers},
-      max_sessions_{max_sessions != 0 ? max_sessions : 1},
-      closed_{false}, on_close_{on_close}
+    : svc_(svc), iri_(iri), default_headers_(default_headers),
+      max_sessions_(max_sessions != 0 ? max_sessions : 1),
+      closed_(false), on_close_(on_close)
 {
 }
 
