@@ -20,79 +20,79 @@ struct request;
 
 class request_dispatcher: public tip::http::server::request_handler {
 public:
-	using request_method_set = std::set<request_method>;
-	using handler_closure = ::std::function< void ( reply ) >;
+    using request_method_set = std::set<request_method>;
+    using handler_closure = ::std::function< void ( reply ) >;
 public:
-	class add_handlers_helper;
+    class add_handlers_helper;
 public:
-	request_dispatcher();
-	virtual ~request_dispatcher();
+    request_dispatcher();
+    virtual ~request_dispatcher();
 
-	void
-	add_handler( request_method, std::string const&, request_handler_ptr );
-	void
-	add_handler( request_method_set const&, std::string const&, request_handler_ptr );
+    void
+    add_handler( request_method, std::string const&, request_handler_ptr );
+    void
+    add_handler( request_method_set const&, std::string const&, request_handler_ptr );
 
-	template < typename T >
-	void
-	add_handler( request_method method, std::string const& path)
-	{
-		add_handler( method, path, std::make_shared< T >() );
-	}
-	template < typename T >
-	void
-	add_handler( request_method_set const& methods, std::string const& path)
-	{
-		add_handler( methods, path, std::make_shared< T >() );
-	}
+    template < typename T >
+    void
+    add_handler( request_method method, std::string const& path)
+    {
+        add_handler( method, path, std::make_shared< T >() );
+    }
+    template < typename T >
+    void
+    add_handler( request_method_set const& methods, std::string const& path)
+    {
+        add_handler( methods, path, std::make_shared< T >() );
+    }
 
-	template < typename T, typename ... U >
-	void
-	add_handler( request_method method, std::string const& path, U ... args )
-	{
-		add_handler( method, path, std::make_shared< T >( std::forward(args) ... ) );
-	}
-	template < typename T, typename ... U >
-	void
-	add_handler( request_method_set const& methods, std::string const& path, U ... args )
-	{
-		add_handler( methods, path, std::make_shared< T >( std::forward(args) ... ) );
-	}
+    template < typename T, typename ... U >
+    void
+    add_handler( request_method method, std::string const& path, U ... args )
+    {
+        add_handler( method, path, std::make_shared< T >( std::forward(args) ... ) );
+    }
+    template < typename T, typename ... U >
+    void
+    add_handler( request_method_set const& methods, std::string const& path, U ... args )
+    {
+        add_handler( methods, path, std::make_shared< T >( std::forward(args) ... ) );
+    }
 
-	void
-	add_handler(request_method method, std::string const& path, handler_closure func);
-	void
-	add_handler(request_method_set methods, std::string const& path, handler_closure func);
+    void
+    add_handler(request_method method, std::string const& path, handler_closure func);
+    void
+    add_handler(request_method_set methods, std::string const& path, handler_closure func);
 
-	add_handlers_helper
-	add_handlers();
+    add_handlers_helper
+    add_handlers();
 
-	void
-	get(std::string const&, request_handler_ptr);
-	void
-	post(std::string const&, request_handler_ptr);
+    void
+    get(std::string const&, request_handler_ptr);
+    void
+    post(std::string const&, request_handler_ptr);
 private:
-	virtual void
-	do_handle_request(reply);
+    virtual void
+    do_handle_request(reply);
 private:
-	struct impl;
-	typedef std::shared_ptr<impl> pimpl;
-	pimpl pimpl_;
+    struct impl;
+    using pimpl = std::shared_ptr<impl>;
+    pimpl pimpl_;
 };
 
-typedef std::shared_ptr<request_dispatcher> request_dispatcher_ptr;
+using request_dispatcher_ptr = std::shared_ptr<request_dispatcher>;
 
 class request_dispatcher::add_handlers_helper {
 public:
-	add_handlers_helper(add_handlers_helper const&) = default;
+    add_handlers_helper(add_handlers_helper const&) = default;
 
-	add_handlers_helper&
-	operator()(request_method method, std::string const& path, handler_closure func);
+    add_handlers_helper&
+    operator()(request_method method, std::string const& path, handler_closure func);
 private:
-	add_handlers_helper(request_dispatcher_ptr);
+    add_handlers_helper(request_dispatcher_ptr);
 private:
-	friend class request_dispatcher;
-	request_dispatcher_ptr owner_;
+    friend class request_dispatcher;
+    request_dispatcher_ptr owner_;
 };
 
 
