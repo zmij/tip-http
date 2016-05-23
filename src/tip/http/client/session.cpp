@@ -393,7 +393,7 @@ struct session_fsm_ :
                 }
                 if (fsm.get_deferred_queue().empty()) {
                     fsm.enqueue_event( events::disconnect{} );
-            }
+                }
             }
         };
         struct internal_transition_table : ::boost::mpl::vector<
@@ -444,9 +444,9 @@ struct session_fsm_ :
     struct transition_table : boost::mpl::vector<
         /*        Start            Event                    Next            Action                        Guard                  */
         /*  +-----------------+-----------------------+---------------+---------------------------+---------------------+ */
-        Row <    unplugged,        events::connected,        online,            none,                        none                >,
+        Row <    unplugged,         events::connected,        online,            none,                        none                >,
         /* Transport errors */
-        Row <    unplugged,        events::
+        Row <    unplugged,         events::
                                     transport_error,    connection_failed,  none,                        events_pending      >,
         Row <    unplugged,         events::
                                     transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
@@ -455,8 +455,8 @@ struct session_fsm_ :
         Row <    online,            events::
                                     transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
         /* Disconnect */
-        Row <    unplugged,        events::disconnect,        terminated,        none,                        none                >,
-        Row <    online,            events::disconnect,        terminated,        disconnect_transport,        none                >,
+        Row <    unplugged,         events::disconnect, terminated,         none,                        none                >,
+        Row <    online,            events::disconnect, terminated,         disconnect_transport,        none                >,
         Row <    connection_failed, events::disconnect, terminated,         none,                        none                >
     >{};
 
@@ -478,6 +478,7 @@ struct session_fsm_ :
     session_fsm_(io_service& io_service, request::iri_type const& iri,
             session::session_callback on_idle, session::session_error on_close,
             headers const& default_headers) :
+        io_service_{io_service},
         strand_{io_service},
         transport_{io_service, session::create_connection_id(iri),
             strand_.wrap(
@@ -498,6 +499,7 @@ struct session_fsm_ :
             local_log(logger::DEBUG) << "Connected to "
                     << scheme_ << "://" << host_;
             fsm().process_event(events::connected{});
+            start_read_headers();
         } else {
             try {
                 ::std::rethrow_exception(ex);
@@ -533,16 +535,22 @@ struct session_fsm_ :
     }
 
     void
+    start_read_headers()
+    {
+        using std::placeholders::_1;
+        using std::placeholders::_2;
+        // Start read headers
+        boost::asio::async_read_until(transport_.socket_, incoming_, "\r\n\r\n",
+            strand_.wrap(::std::bind(&shared_type::handle_read_headers,
+                    shared_base::shared_from_this(), _1, _2)));
+    }
+
+    void
     handle_write(error_code const& ec, size_t, buffer_ptr)
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
-        if (!ec) {
-            // Start read headers
-            boost::asio::async_read_until(transport_.socket_, incoming_, "\r\n\r\n",
-                strand_.wrap(::std::bind(&shared_type::handle_read_headers,
-                        shared_base::shared_from_this(), _1, _2)));
-        } else {
+        if (ec) {
             fsm().process_event(events::transport_error{
                 ::std::make_exception_ptr(errors::connection_broken{ec.message()})
             });
@@ -634,6 +642,7 @@ struct session_fsm_ :
     request_handled()
     {
         ++req_count_;
+        start_read_headers();
     }
 
     void
@@ -660,18 +669,20 @@ private:
     {
         return static_cast< session_fsm const& >(*this);
     }
-private:
-    boost::asio::io_service::strand    strand_;
-    transport_type                    transport_;
-    iri::host                        host_;
-    iri::scheme                        scheme_;
-    buffer_type                        incoming_;
-    headers                            default_headers_;
-
-    session::session_callback       on_idle_;
-    session::session_error          on_close_;
 protected:
-    ::std::atomic<::std::size_t>    req_count_;
+    io_service&                         io_service_;
+private:
+    boost::asio::io_service::strand     strand_;
+    transport_type                      transport_;
+    iri::host                           host_;
+    iri::scheme                         scheme_;
+    buffer_type                         incoming_;
+    headers                             default_headers_;
+
+    session::session_callback           on_idle_;
+    session::session_error              on_close_;
+protected:
+    ::std::atomic<::std::size_t>        req_count_;
 };
 //-----------------------------------------------------------------------------
 template < typename TransportType >
@@ -696,10 +707,10 @@ public:
     }
 
     void
-    do_send_request(request_ptr req, response_callback cb, error_callback ecb) override
+    do_send_request(request_ptr req, response_callback on_reply, error_callback on_error) override
     {
         local_log() << "enqueue request event";
-        base_type::process_event( events::request{ req, cb, ecb });
+        base_type::process_event( events::request{ req, on_reply, on_error });
     }
     void
     do_close() override
@@ -726,14 +737,14 @@ void
 session::send_request(request_method method, request::iri_type const& iri,
         body_type const& body, response_callback cb, error_callback ecb)
 {
-    do_send_request( request::create(method, iri, body), cb, ecb );
+    do_send_request( request::create(method, iri, body), cb, ecb);
 }
 
 void
 session::send_request(request_method method, request::iri_type const& iri,
         body_type&& body, response_callback cb, error_callback ecb)
 {
-    do_send_request( request::create(method, iri, std::move(body)), cb, ecb );
+    do_send_request( request::create(method, iri, std::move(body)), cb, ecb);
 }
 
 void
