@@ -74,14 +74,14 @@ connection::read_request_headers()
 
 void
 connection::handle_read_headers(const boost::system::error_code& e,
-                                std::size_t)
+                                std::size_t bytes_read)
 {
     if (!e) {
         std::istream is(&incoming_);
         request_ptr req = std::make_shared< request >();
         if (req->read_headers(is)) {
             try {
-            read_request_body(req, req->read_body(is));
+                read_request_body(req, req->read_body(is));
             } catch (::std::exception const& e) {
                 local_log(logger::ERROR) << "Error reading body: " << e.what();
                 send_error(req, response_status::bad_request);
@@ -93,7 +93,7 @@ connection::handle_read_headers(const boost::system::error_code& e,
         }
     } else {
         local_log(logger::DEBUG) << "Error reading request headers: "
-                << e.message();
+                << e.message() << " size received " << bytes_read;
     }
 }
 
