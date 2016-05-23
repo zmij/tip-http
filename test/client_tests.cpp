@@ -65,8 +65,9 @@ TEST(HttpClient, Session)
                 << r->headers_;
         resp = r;
         session->close();
+        io_service.stop();
     },
-    [](std::exception_ptr) {});
+    [&](std::exception_ptr) {io_service.stop();});
 
     io_service.run();
     EXPECT_TRUE(session_closed);
@@ -85,8 +86,8 @@ TEST(HttpClient, SessionPool)
         local_log() << "Connection pool closed";
     }, {}, 1);
     pool->send_request(request::create(GET, iri, {}),
-    [](request_ptr, response_ptr){},
-    [](std::exception_ptr) {});
+    [&](request_ptr, response_ptr){io_service.stop();},
+    [&](std::exception_ptr) {io_service.stop();});
 
     EXPECT_TRUE(pool.get());
     local_log(logger::DEBUG) << "Start io_service";
@@ -106,9 +107,11 @@ TEST(HttpClient, GetRequest)
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
         resp = r;
+        io_service.stop();
     },
     [&](std::exception_ptr) {
         error = true;
+        io_service.stop();
     });
     io_service.run();
     EXPECT_FALSE(error);
@@ -129,9 +132,11 @@ TEST(HttpClient, FailConnecting)
             local_log() << "Received a response: Content-Length: "
                     << r->content_length() << " body size " << r->body_.size();
             resp = r;
+            io_service.stop();
         },
         [&](std::exception_ptr) {
-                error = true;
+            error = true;
+            io_service.stop();
         });
     }
     io_service.run();
@@ -152,9 +157,11 @@ TEST(HttpsClient, FailVerifyCert)
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
         resp = r;
+        io_service.stop();
     },
     [&](std::exception_ptr) {
-            error = true;
+        error = true;
+        io_service.stop();
     });
     io_service.run();
     EXPECT_FALSE(resp.get());
@@ -179,9 +186,11 @@ TEST(HttpsClient, VerifyCertOK)
                 << "\nHeaders\n"
                 << r->headers_;
         resp = r;
+        io_service.stop();
     },
     [&](std::exception_ptr) {
-            error = true;
+        error = true;
+        io_service.stop();
     });
     io_service.run();
     EXPECT_TRUE(resp.get());
@@ -207,9 +216,11 @@ TEST(HttpsClient, GetAppleCert)
                 << "\nHeaders\n"
                 << r->headers_;
         resp = r;
+        io_service.stop();
     },
     [&](std::exception_ptr) {
-            error = true;
+        error = true;
+        io_service.stop();
     });
     io_service.run();
     EXPECT_TRUE(resp.get());
