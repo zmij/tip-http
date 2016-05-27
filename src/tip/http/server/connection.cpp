@@ -41,7 +41,8 @@ connection::connection(io_service_ptr io_service,
     socket_(*io_service),
     request_handler_(handler),
     default_headers_{
-        { Server, "tip-http-server/" + tip::VERSION }
+        { Server, "tip-http-server/" + tip::VERSION },
+        { AccessControlAllowOrigin, "*" }
     }
 {
 }
