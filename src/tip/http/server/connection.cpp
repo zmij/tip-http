@@ -118,8 +118,9 @@ connection::read_request_body(request_ptr req, read_result_type res)
             };
             add_context(rep, new remote_address(rep, peer_));
             try {
-                if(1) // TODO: is_silent
+                if(!request_handler_->is_silent(req->path)) {
                     local_log(logger::DEBUG) << peer_->address() << " " << req->method << " " << req->path << " start";
+                }
                 request_handler_->handle_request(rep);
             } catch (::std::exception const& e) {
                 local_log(logger::ERROR) << "Exception when dispatching request "
@@ -174,7 +175,7 @@ connection::send_response(request_ptr req, response_const_ptr resp)
     using std::placeholders::_1;
     using std::placeholders::_2;
 
-    if(1) { // TODO: is_silent
+    if(!request_handler_->is_silent(req->path)) {
         auto proc_time = boost::posix_time::microsec_clock::local_time() - req->start_;
         if (proc_time.is_not_a_date_time()) {
             local_log(logger::DEBUG) << peer_->address()

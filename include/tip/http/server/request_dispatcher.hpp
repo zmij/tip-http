@@ -64,6 +64,11 @@ public:
     void
     add_handler(request_method_set methods, std::string const& path, handler_closure func);
 
+    void
+    make_silent(std::string const& path);
+    bool
+    is_silent(tip::iri::path const& path) override;
+
     add_handlers_helper
     add_handlers();
 
