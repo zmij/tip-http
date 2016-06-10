@@ -21,12 +21,12 @@ namespace tip {
 namespace http {
 namespace server {
 
-LOCAL_LOGGING_FACILITY(REQHND, TRACE);
+// LOCAL_LOGGING_FACILITY(REQHND, TRACE);
 
 void
 request_handler::handle_request(reply req)
 {
-	local_log() << "Handle request for " << req.request()->path;
+	// local_log() << "Handle request for " << req.request()->path;
 
 	do_handle_request(req);
 }

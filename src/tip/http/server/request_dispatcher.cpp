@@ -41,7 +41,7 @@ struct request_dispatcher::impl {
 		if (p == handlers_.end()) {
 			p = handlers_.insert(std::make_pair(matcher, iri_handlers{})).first;
 		}
-		local_log() << "Add " << method << " handler: " << matcher;
+		local_log(logger::DEBUG) << "Add " << method << "\thandler: " << matcher;
 		p->second.insert(std::make_pair(method, handler));
 	}
 
@@ -54,14 +54,14 @@ struct request_dispatcher::impl {
 			return h.first.matches(r.path());
 		});
 		if (p == handlers_.end()) {
-			local_log() << "Failed to find handler for " << r.path();
+			local_log(logger::WARNING) << "Failed to find handler for " << r.path();
 			r.client_error(response_status::not_found);
 			return {};
 		}
-		local_log() << "Handler found " << p->first;
+		// local_log() << "Handler found " << p->first;
 		auto h = p->second.find(r.method());
 		if (h == p->second.end()) {
-			local_log() << "Handler found, but not for " << r.method();
+			local_log(logger::WARNING) << "Handler found, but not for " << r.method();
 			r.client_error(response_status::method_not_allowed);
 			return {};
 		}
@@ -139,7 +139,7 @@ request_dispatcher::post(std::string const& path, request_handler_ptr handler)
 void
 request_dispatcher::do_handle_request(reply r)
 {
-	local_log() << "Dispatch request for " << r.path();
+	// local_log() << "Dispatch request for " << r.path();
 	pimpl_->dispatch_request(r);
 }
 
