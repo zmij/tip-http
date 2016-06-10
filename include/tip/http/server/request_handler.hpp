@@ -11,6 +11,7 @@
 #include <string>
 #include <boost/noncopyable.hpp>
 #include <tip/http/server/reply.hpp>
+#include <tip/iri.hpp>
 #include <memory>
 #include <functional>
 
@@ -37,6 +38,10 @@ public:
 	 */
 	virtual void
 	handle_request(reply);
+
+	virtual bool
+	is_silent(tip::iri::path const&)
+	{ return false; }
 protected:
 	/// Perform URL-decoding on a string. Returns false if the encoding was
 	/// invalid.
