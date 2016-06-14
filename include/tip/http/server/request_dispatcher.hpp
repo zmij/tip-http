@@ -78,7 +78,7 @@ public:
     post(std::string const&, request_handler_ptr);
 private:
     virtual void
-    do_handle_request(reply);
+    do_handle_request(reply) override;
 private:
     struct impl;
     using pimpl = std::shared_ptr<impl>;
