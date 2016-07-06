@@ -91,7 +91,7 @@ void server::run()
                 local_log(logger::ERROR) << "Uncaught exception " << e.what();
                 handle_stop();
             } catch (...) {
-                local_log(logger::ERROR) << "Uncaught exception";
+                local_log(logger::ERROR) << "Uncaught unknown exception";
                 handle_stop();
             }
         }));
@@ -128,7 +128,7 @@ void
 server::handle_stop()
 {
     local_log(logger::INFO) << "Server stopping";
-    acceptor_.cancel();
+    acceptor_.close();
     if (stop_) {
         stop_();
     } else {
