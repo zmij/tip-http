@@ -10,6 +10,7 @@
 #include <tip/log.hpp>
 #include <map>
 #include <unordered_set>
+#include <mutex>
 
 namespace tip {
 namespace http {
@@ -18,12 +19,15 @@ namespace server {
 LOCAL_LOGGING_FACILITY(REQDISP, TRACE);
 
 struct request_dispatcher::impl {
-    using iri_handlers = ::std::map< request_method, handler_closure >;
-    using handler_map_type = ::std::map< detail::path_matcher, iri_handlers >;
-    using silent_path_type = ::std::unordered_set< std::string >;
+    using iri_handlers      = ::std::map< request_method, handler_closure >;
+    using handler_map_type  = ::std::map< detail::path_matcher, iri_handlers >;
+    using silent_path_type  = ::std::unordered_set< std::string >;
+    using mutex_type        = ::std::mutex;
+    using lock_type         = ::std::lock_guard<mutex_type>;
 
-    handler_map_type handlers_;
-    silent_path_type silent_;
+    handler_map_type    handlers_;
+    silent_path_type    silent_;
+    mutex_type          mutex_;
 
     void
     add_handler(request_method method, std::string const& path,
@@ -38,6 +42,7 @@ struct request_dispatcher::impl {
     add_handler(request_method method, ::std::string const& path,
             handler_closure handler)
     {
+        lock_type lock{mutex_};
         detail::path_matcher matcher{ path };
 
         auto p = handlers_.find(matcher);
@@ -51,6 +56,7 @@ struct request_dispatcher::impl {
     handler_closure
     get_handler(reply& r)
     {
+        lock_type lock{mutex_};
         auto p = std::find_if(handlers_.begin(), handlers_.end(),
         [&]( handler_map_type::value_type const& h ) {
             return h.first.matches(r.path());
@@ -87,8 +93,8 @@ struct request_dispatcher::impl {
     bool
     is_silent(tip::iri::path const& path)
     {
-		std::stringstream ss;
-		ss << path;
+        std::stringstream ss;
+        ss << path;
         return silent_.count(ss.str()) > 0;
     }
 };
