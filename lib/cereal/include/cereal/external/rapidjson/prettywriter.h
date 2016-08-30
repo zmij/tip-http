@@ -11,7 +11,7 @@ namespace rapidjson {
 	\tparam Encoding Encoding of both source strings and output.
 	\tparam Allocator Type of allocator for allocating memory of stack.
 */
-template<typename Stream, typename Encoding = UTF8<>, typename Allocator = MemoryPoolAllocator<> >
+template<typename Stream, typename Encoding = UTF8<>, typename Allocator = CrtAllocator >
 class PrettyWriter : public Writer<Stream, Encoding, Allocator> {
 public:
 	typedef Writer<Stream, Encoding, Allocator> Base;
