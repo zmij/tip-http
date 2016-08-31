@@ -26,7 +26,7 @@ namespace rapidjson {
 	\tparam Allocator	Allocator type for allocating memory of object, array and string.
 */
 #pragma pack (push, 4)
-template <typename Encoding, typename Allocator = MemoryPoolAllocator<> >
+template <typename Encoding, typename Allocator = CrtAllocator >
 class GenericValue {
 public:
 	//! Name-value pair in an object.
@@ -693,7 +693,7 @@ typedef GenericValue<UTF8<> > Value;
 	\tparam Encoding encoding for both parsing and string storage.
 	\tparam Alloactor allocator for allocating memory for the DOM, and the stack during parsing.
 */
-template <typename Encoding, typename Allocator = MemoryPoolAllocator<> >
+template <typename Encoding, typename Allocator = CrtAllocator >
 class GenericDocument : public GenericValue<Encoding, Allocator> {
 public:
 	typedef typename Encoding::Ch Ch;						//!< Character type derived from Encoding.
