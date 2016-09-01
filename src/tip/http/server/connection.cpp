@@ -117,18 +117,22 @@ connection::read_request_body(request_ptr req, read_result_type res)
                         shared_from_this(), req, std::placeholders::_1))
             };
             add_context(rep, new remote_address(rep, peer_));
-            try {
-                if(!request_handler_->is_silent(req->path)) {
-                    local_log(logger::DEBUG) << peer_->address() << " " << req->method << " " << req->path << " start";
-                }
-                request_handler_->handle_request(rep);
-            } catch (::std::exception const& e) {
-                local_log(logger::ERROR) << "Exception when dispatching request "
-                        << req->path << ": " << e.what();
-            } catch (...) {
-                local_log(logger::ERROR) << "Unknown exception when dispatching request "
-                        << req->path;
+            if(!request_handler_->is_silent(req->path)) {
+                local_log(logger::DEBUG) << peer_->address() << " " << req->method << " " << req->path << " start";
             }
+            auto handler = request_handler_;
+            io->post(
+            [handler, rep, req](){
+                try {
+                    handler->handle_request(rep);
+                } catch (::std::exception const& e) {
+                    local_log(logger::ERROR) << "Exception when dispatching request "
+                            << req->path << ": " << e.what();
+                } catch (...) {
+                    local_log(logger::ERROR) << "Unknown exception when dispatching request "
+                            << req->path;
+                }
+            });
         } else {
             local_log(logger::WARNING) << "IO service weak pointer is bad";
         }
