@@ -26,7 +26,6 @@ while (<>) {
 	$enum_val =~ s/-//g;
 	my $header_lc = lc($header);
 	
-	print "\t\t(\"$header\", $enum_val)\n";
 	print "\t\t(\"$header_lc\", $enum_val)\n";
 }
 
