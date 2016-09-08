@@ -29,7 +29,7 @@ namespace rapidjson {
 	\tparam Encoding Encoding of both source strings and output.
 	\implements Handler
 */
-template<typename Stream, typename Encoding = UTF8<>, typename Allocator = CrtAllocator >
+template<typename Stream, typename Encoding = UTF8<>, typename Allocator = MemoryPoolAllocator<> >
 class Writer {
 public:
 	typedef typename Encoding::Ch Ch;
