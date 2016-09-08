@@ -203,7 +203,7 @@ template<> inline void SkipWhitespace(StringStream& stream) {
     \tparam Encoding Encoding of both the stream and the parse output.
     \tparam Allocator Allocator type for stack.
 */
-template <typename Encoding, typename Allocator = CrtAllocator >
+template <typename Encoding, typename Allocator = MemoryPoolAllocator<> >
 class GenericReader {
 public:
 	typedef typename Encoding::Ch Ch;
