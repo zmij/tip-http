@@ -74,7 +74,14 @@ server::server(io_service_ptr io_svc,
     start_accept();
 }
 
-void server::run()
+server::endpoint
+server::local_endpoint() const
+{
+    return acceptor_.local_endpoint();
+}
+
+void
+server::run()
 {
     typedef tip::ssl::ssl_context_service ssl_service;
     ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(*io_service_);
@@ -104,7 +111,8 @@ void server::run()
         threads[i]->join();
 }
 
-void server::start_accept()
+void
+server::start_accept()
 {
     new_connection_.reset(new connection(io_service_, request_handler_));
     auto endpoint = std::make_shared<boost::asio::ip::tcp::endpoint>();
@@ -113,7 +121,8 @@ void server::start_accept()
                     std::placeholders::_1, endpoint));
 }
 
-void server::handle_accept(const boost::system::error_code& e,
+void
+server::handle_accept(const boost::system::error_code& e,
         endpoint_ptr endpoint)
 {
     if (!e)

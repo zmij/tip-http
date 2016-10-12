@@ -28,6 +28,7 @@ public:
     typedef std::function< void () > stop_function;
     typedef std::shared_ptr< boost::asio::io_service > io_service_ptr;
     typedef std::shared_ptr< boost::asio::ip::tcp::endpoint> endpoint_ptr;
+    using endpoint = boost::asio::ip::tcp::endpoint;
 public:
     /**
      * Construct the server to listen on the specified TCP address and port, and
@@ -48,8 +49,11 @@ public:
     /**
      * Run the server's io_service loop.
      */
-    void run();
+    void
+    run();
 
+    endpoint
+    local_endpoint() const;
 private:
     /**
      * Initiate an asynchronous accept operation.
