@@ -150,7 +150,7 @@ request::create(request_method method, iri_type const& iri, body_type const& bod
             { Host, iri.authority.host }
         },
         body,
-        boost::posix_time::microsec_clock::local_time()
+        boost::posix_time::microsec_clock::universal_time()
     });
 }
 
@@ -165,7 +165,7 @@ request::create(request_method method, iri_type const& iri, body_type&& body)
             { Host, iri.authority.host }
         },
         std::move(body),
-        boost::posix_time::microsec_clock::local_time()
+        boost::posix_time::microsec_clock::universal_time()
     });
 }
 

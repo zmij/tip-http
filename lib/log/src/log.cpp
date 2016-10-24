@@ -40,7 +40,7 @@ namespace {
 	timestamp_type
 	timestamp()
 	{
-		return boost::posix_time::microsec_clock::local_time();
+		return boost::posix_time::microsec_clock::universal_time();
 	}
 
 	std::string const&
@@ -242,10 +242,10 @@ struct log_writer {
 					}
 				}
 			} catch (::std::exception const& e) {
-				auto time = boost::posix_time::microsec_clock::local_time();
+				auto time = boost::posix_time::microsec_clock::universal_time();
 				out_ << time.time_of_day() << " Exception in logging thread: " << e.what() << ::std::cerr;
 			} catch (...) {
-				auto time = boost::posix_time::microsec_clock::local_time();
+				auto time = boost::posix_time::microsec_clock::universal_time();
 				out_ << time.time_of_day() << " Unknown exception in logging thread"<< ::std::cerr;
 			}
 		}
