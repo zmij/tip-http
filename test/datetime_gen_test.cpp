@@ -19,7 +19,7 @@ TEST(GenerateTest, DateTime)
 	typedef gen::http_datetime_grammar< output_iterator > http_datetime_grammar;
 	http_datetime_grammar gen;
 
-	boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+	boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
 	std::ostringstream os;
 	output_iterator out(os);
 	EXPECT_TRUE(karma::generate(out, gen, now));

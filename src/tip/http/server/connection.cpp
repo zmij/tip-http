@@ -107,7 +107,7 @@ connection::read_request_body(request_ptr req, read_result_type res)
         // success read
         io_service_ptr io = io_service_.lock();
         if (io) {
-            req->start_ = boost::posix_time::microsec_clock::local_time();
+            req->start_ = boost::posix_time::microsec_clock::universal_time();
             reply rep{
                 io,
                 req,
@@ -180,7 +180,7 @@ connection::send_response(request_ptr req, response_const_ptr resp)
     using std::placeholders::_2;
 
     if(!request_handler_->is_silent(req->path)) {
-        auto proc_time = boost::posix_time::microsec_clock::local_time() - req->start_;
+        auto proc_time = boost::posix_time::microsec_clock::universal_time() - req->start_;
         if (proc_time.is_not_a_date_time()) {
             local_log(logger::DEBUG) << peer_->address()
                     << " " << req->method << " " << req->path
