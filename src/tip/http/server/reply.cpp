@@ -28,6 +28,7 @@ struct reply::impl {
     using cookies_type = std::set< cookie, cookie_name_cmp >;
     using vector_buff_type = boost::iostreams::stream_buffer<
             boost::iostreams::back_insert_device< body_type >>;
+    using atomic_flag  = ::std::atomic<bool>;
 
     io_service_ptr      io_service_;
 
@@ -37,7 +38,7 @@ struct reply::impl {
     send_error_func     send_error_;
     finished_func       finished_;
 
-    ::std::atomic_flag  response_sent_;
+    atomic_flag         response_sent_;
 
     vector_buff_type    output_buffer_;
     std::ostream        output_stream_;
@@ -56,7 +57,7 @@ struct reply::impl {
 #pragma GCC diagnostic pop
     ~impl()
     {
-        if (!response_sent_.test_and_set() && send_error_) {
+        if (!response_sent_ && send_error_) {
             send_error_(response_status::internal_server_error);
         }
         if (finished_) {
@@ -70,9 +71,8 @@ struct reply::impl {
     void
     add_cookie(cookie&& c)
     {
-        if (!response_sent_.test_and_set()) {
+        if (!response_sent_) {
             cookies_.insert(std::move(c));
-            response_sent_.clear();
         }
     }
 
@@ -104,7 +104,8 @@ struct reply::impl {
         for (auto c: cookies_) {
             resp_->add_cookie(c);
         }
-        if (send_response_ && response_sent_.test_and_set()) {
+        if (send_response_ && !response_sent_) {
+            response_sent_ = true;
             send_response_(resp_);
         }
         if (finished_) {
@@ -117,7 +118,8 @@ struct reply::impl {
     void
     send_error(response_status status)
     {
-        if (send_error_ && response_sent_.test_and_set()) {
+        if (send_error_ && !response_sent_) {
+            response_sent_ = true;
             send_error_(status);
         }
         if (finished_) {
