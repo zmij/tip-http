@@ -16,6 +16,8 @@
 #include <boost/spirit/include/support_istream_iterator.hpp>
 #include <boost/spirit/include/support_multi_pass.hpp>
 
+#include <atomic>
+
 namespace tip {
 namespace http {
 
@@ -23,14 +25,16 @@ namespace  {
 
 const std::string EMPTY_STRING;
 
+::std::atomic<::std::size_t>    request_counter;
+
 }  // namespace
 
 tip::iri::host
 host_name(std::string const& s)
 {
     namespace qi = boost::spirit::qi;
-    typedef std::string::const_iterator string_iterator;
-    typedef iri::grammar::parse::iauthority_grammar<string_iterator> iauthority_grammar;
+    using string_iterator = std::string::const_iterator;
+    using iauthority_grammar = iri::grammar::parse::iauthority_grammar<string_iterator>;
 
     string_iterator f = s.begin();
     string_iterator l = s.end();
@@ -39,6 +43,52 @@ host_name(std::string const& s)
         return auth.host;
     }
     return tip::iri::host();
+}
+
+request::request()
+    : method{GET}, version{1, 1},
+      path{}, query{}, fragment{}, headers_{}, body_{},
+      start_{boost::posix_time::microsec_clock::universal_time()},
+      serial{get_number()}
+{
+}
+
+request::request(request_method m,
+        iri::path const& p, query_type const& q, iri::fragment const& f,
+        headers const& h, body_type const& body)
+    : method{m}, version{1, 1},
+      path{p}, query{q}, fragment{f}, headers_{h}, body_{body},
+      start_{boost::posix_time::microsec_clock::universal_time()},
+      serial{get_number()}
+{
+}
+
+request::request(request_method m,
+        iri::path const& p, query_type const& q, iri::fragment const& f,
+        headers const& h, body_type&& body)
+    : method{m}, version{1, 1},
+      path{p}, query{q}, fragment{f}, headers_{h}, body_{::std::move(body)},
+      start_{boost::posix_time::microsec_clock::universal_time()},
+      serial{get_number()}
+{
+}
+
+request::request(request const& rhs)
+    : method{rhs.method}, version{rhs.version},
+      path{rhs.path}, query{rhs.query}, fragment{rhs.fragment},
+      headers_{rhs.headers_}, body_{rhs.body_},
+      start_{rhs.start_},
+      serial{rhs.serial}
+{
+}
+
+request::request(request&& rhs)
+    : method{::std::move(rhs.method)}, version{::std::move(rhs.version)},
+      path{::std::move(rhs.path)}, query{::std::move(rhs.query)}, fragment{::std::move(rhs.fragment)},
+      headers_{::std::move(rhs.headers_)}, body_{::std::move(rhs.body_)},
+      start_{::std::move(rhs.start_)},
+      serial{rhs.serial}
+{
 }
 
 size_t
@@ -74,9 +124,9 @@ request::read_headers(std::istream& is)
     namespace spirit = boost::spirit;
     namespace qi = boost::spirit::qi;
 
-    typedef std::istreambuf_iterator<char> istreambuf_iterator;
-    typedef boost::spirit::multi_pass< istreambuf_iterator > stream_iterator;
-    typedef grammar::parse::request_grammar< stream_iterator > request_grammar;
+    using istreambuf_iterator = std::istreambuf_iterator<char>;
+    using stream_iterator = boost::spirit::multi_pass< istreambuf_iterator >;
+    using request_grammar = grammar::parse::request_grammar< stream_iterator >;
     static request_grammar grammar_;
 
     stream_iterator f = spirit::make_default_multi_pass(istreambuf_iterator(is));
@@ -120,9 +170,9 @@ std::ostream&
 operator << (std::ostream& os, request const& val)
 {
     namespace karma = boost::spirit::karma;
-    typedef std::ostream_iterator<char> output_iterator;
-    typedef grammar::gen::request_grammar<output_iterator> request_grammar;
-    typedef grammar::gen::header_grammar<output_iterator> header_grammar;
+    using output_iterator = std::ostream_iterator<char>;
+    using request_grammar = grammar::gen::request_grammar<output_iterator>;
+    using header_grammar = grammar::gen::header_grammar<output_iterator>;
 
     std::ostream::sentry s(os);
     if (s) {
@@ -144,13 +194,11 @@ request::create(request_method method, iri_type const& iri, body_type const& bod
 {
     return request_ptr(new request{
         method,
-        version_type{ 1, 1 },
         iri.path, iri.query, iri.fragment,
         headers {
             { Host, iri.authority.host }
         },
-        body,
-        boost::posix_time::microsec_clock::universal_time()
+        body
     });
 }
 
@@ -159,13 +207,11 @@ request::create(request_method method, iri_type const& iri, body_type&& body)
 {
     return request_ptr(new request{
         method,
-        version_type{ 1, 1 },
         iri.path, iri.query, iri.fragment,
         headers {
             { Host, iri.authority.host }
         },
-        std::move(body),
-        boost::posix_time::microsec_clock::universal_time()
+        std::move(body)
     });
 }
 
@@ -183,13 +229,19 @@ bool
 request::parse_iri(std::string const& iri_str, iri_type& iri)
 {
     namespace qi = boost::spirit::qi;
-    typedef std::string::const_iterator string_iterator;
-    typedef iri::grammar::parse::iri_grammar< string_iterator,
-            grammar::parse::query_grammar< string_iterator > > iri_grammar;
+    using string_iterator = std::string::const_iterator;
+    using iri_grammar = iri::grammar::parse::iri_grammar< string_iterator,
+            grammar::parse::query_grammar< string_iterator > >;
     iri_grammar parser;
     string_iterator f = iri_str.begin();
     string_iterator l = iri_str.end();
     return qi::parse(f, l, parser, iri) && f == l;
+}
+
+::std::size_t
+request::get_number()
+{
+    return ++request_counter;
 }
 
 std::ostream&

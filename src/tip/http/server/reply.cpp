@@ -24,9 +24,9 @@ namespace http {
 namespace server {
 
 struct reply::impl {
-    typedef std::set< cookie, cookie_name_cmp > cookies_type;
-    typedef boost::iostreams::stream_buffer<
-            boost::iostreams::back_insert_device< body_type >> vector_buff_type;
+    using cookies_type = std::set< cookie, cookie_name_cmp >;
+    using vector_buff_type = boost::iostreams::stream_buffer<
+            boost::iostreams::back_insert_device< body_type >>;
 
     io_service_ptr        io_service_;
 
