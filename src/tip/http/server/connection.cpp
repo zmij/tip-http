@@ -118,7 +118,10 @@ connection::read_request_body(request_ptr req, read_result_type res)
             };
             add_context(rep, new remote_address(rep, peer_));
             if(!request_handler_->is_silent(req->path)) {
-                local_log(logger::DEBUG) << peer_->address() << " " << req->method << " " << req->path << " start";
+                local_log(logger::DEBUG)
+                        << "[#" << req->serial << "] "
+                        << peer_->address() << " "
+                        << req->method << " " << req->path << " start";
             }
             auto handler = request_handler_;
             io->post(
@@ -126,10 +129,14 @@ connection::read_request_body(request_ptr req, read_result_type res)
                 try {
                     handler->handle_request(rep);
                 } catch (::std::exception const& e) {
-                    local_log(logger::ERROR) << "Exception when dispatching request "
+                    local_log(logger::ERROR)
+                            << "[#" << req->serial << "] "
+                            << "Exception when dispatching request "
                             << req->path << ": " << e.what();
                 } catch (...) {
-                    local_log(logger::ERROR) << "Unknown exception when dispatching request "
+                    local_log(logger::ERROR)
+                            << "[#" << req->serial << "] "
+                            << "Unknown exception when dispatching request "
                             << req->path;
                 }
             });
@@ -182,11 +189,15 @@ connection::send_response(request_ptr req, response_const_ptr resp)
     if(!request_handler_->is_silent(req->path)) {
         auto proc_time = boost::posix_time::microsec_clock::universal_time() - req->start_;
         if (proc_time.is_not_a_date_time()) {
-            local_log(logger::DEBUG) << peer_->address()
+            local_log(logger::DEBUG)
+                    << "[#" << req->serial << "] "
+                    << peer_->address()
                     << " " << req->method << " " << req->path
                     << " " << resp->status << " '" << resp->status_line << "' process time: 00:00:00.0";
         } else {
-            local_log(logger::DEBUG) << peer_->address()
+            local_log(logger::DEBUG)
+                    << "[#" << req->serial << "] "
+                    << peer_->address()
                     << " " << req->method << " " << req->path
                     << " " << resp->status << " '" << resp->status_line << "' process time: " << proc_time;
         }

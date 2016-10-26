@@ -22,57 +22,102 @@ namespace http {
 
 class request {
 public:
-	typedef std::pair< std::int32_t, std::int32_t >		version_type;
-	typedef std::pair< std::string, std::string >		query_param_type;
-	typedef std::multimap< std::string, std::string >	query_type;
-	typedef std::vector< char >							body_type;
-	typedef boost::posix_time::ptime					timestamp_type;
-	typedef tip::iri::basic_iri<query_type>				iri_type;
-	typedef util::read_result< std::istream& >			read_result_type;
-	typedef read_result_type::read_callback_type		read_callback;
+    using version_type      = std::pair< std::int32_t, std::int32_t >;
+    using query_param_type  = std::pair< std::string, std::string >;
+    using query_type        = std::multimap< std::string, std::string >;
+    using body_type         = std::vector< char >;
+    using timestamp_type    = boost::posix_time::ptime;
+    using iri_type          = tip::iri::basic_iri<query_type>;
+    using read_result_type  = util::read_result< std::istream& >;
+    using read_callback     = read_result_type::read_callback_type;
 
 
-	request_method	method;
-	version_type	version;
-	iri::path		path;
-	query_type		query;
-	iri::fragment	fragment;
-	mutable headers	headers_;
+    request_method      method;
+    version_type        version;
+    iri::path           path;
+    query_type          query;
+    iri::fragment       fragment;
+    headers mutable     headers_;
 
-	body_type		body_;
+    body_type           body_;
 
-	timestamp_type	start_;
+    timestamp_type      start_;
 
-	size_t
-	content_length() const;
+    ::std::size_t       serial;
 
-	void
-	host(tip::iri::host const&);
-	tip::iri::host
-	host() const;
+    request();
+    request(request_method m,
+        iri::path const&, query_type const&, iri::fragment const&,
+        headers const&, body_type const& body = body_type{});
+    request(request_method m,
+        iri::path const&, query_type const&, iri::fragment const&,
+        headers const&, body_type&& body);
 
-	bool
-	read_headers(std::istream&);
+    request(request const& rhs);
+    request(request&& rhs);
 
-	read_result_type
-	read_body(std::istream&);
+    void
+    swap(request& rhs) noexcept
+    {
+        using ::std::swap;
+        swap(method,    rhs.method);
+        swap(version,   rhs.version);
+        swap(path,      rhs.path);
+        swap(query,     rhs.query);
+        swap(fragment,  rhs.fragment);
+        swap(headers_,  rhs.headers_);
+        swap(body_,     rhs.body_);
+        swap(start_,    rhs.start_);
+        swap(serial,    rhs.serial);
+    }
+
+    request&
+    operator = (request const& rhs)
+    {
+        request tmp{rhs};
+        swap(tmp);
+        return *this;
+    }
+    request&
+    operator = (request&& rhs)
+    {
+        swap(rhs);
+        return *this;
+    }
+
+    size_t
+    content_length() const;
+
+    void
+    host(tip::iri::host const&);
+    tip::iri::host
+    host() const;
+
+    bool
+    read_headers(std::istream&);
+
+    read_result_type
+    read_body(std::istream&);
 public:
-	static request_ptr
-	create(request_method method, iri_type const& iri,
-			body_type const& body = body_type());
+    static request_ptr
+    create(request_method method, iri_type const& iri,
+            body_type const& body = body_type());
 
-	static request_ptr
-	create(request_method method, iri_type const& iri,
-			body_type&& body);
+    static request_ptr
+    create(request_method method, iri_type const& iri,
+            body_type&& body);
 
-	static request_ptr
-	create(request_method method, std::string const& iri_str);
+    static request_ptr
+    create(request_method method, std::string const& iri_str);
 
-	static bool
-	parse_iri(std::string const&, iri_type&);
+    static bool
+    parse_iri(std::string const&, iri_type&);
 private:
-	read_result_type
-	read_body_content_length(std::istream&, size_t remain);
+    static ::std::size_t
+    get_number();
+
+    read_result_type
+    read_body_content_length(std::istream&, size_t remain);
 };
 
 std::ostream&
