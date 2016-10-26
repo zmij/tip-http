@@ -18,6 +18,7 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <set>
+#include <atomic>
 
 namespace tip {
 namespace http {
@@ -28,15 +29,15 @@ struct reply::impl {
     using vector_buff_type = boost::iostreams::stream_buffer<
             boost::iostreams::back_insert_device< body_type >>;
 
-    io_service_ptr        io_service_;
+    io_service_ptr      io_service_;
 
-    request_const_ptr    req_;
+    request_const_ptr   req_;
     response_ptr        resp_;
-    send_response_func     send_response_;
-    send_error_func        send_error_;
-    finished_func        finished_;
+    send_response_func  send_response_;
+    send_error_func     send_error_;
+    finished_func       finished_;
 
-    bool                response_sent_;
+    ::std::atomic_flag  response_sent_;
 
     vector_buff_type    output_buffer_;
     std::ostream        output_stream_;
@@ -48,14 +49,14 @@ struct reply::impl {
     impl(io_service_ptr io_service, request_const_ptr req,
             send_response_func sr, send_error_func se) :
         io_service_(io_service), req_(req), resp_(new response{ {1,1} }),
-        send_response_(sr), send_error_(se), response_sent_(false),
+        send_response_(sr), send_error_(se), response_sent_{},
         output_buffer_(resp_->body_), output_stream_(&output_buffer_)
     {
     }
 #pragma GCC diagnostic pop
     ~impl()
     {
-        if (!response_sent_ && send_error_) {
+        if (!response_sent_.test_and_set() && send_error_) {
             send_error_(response_status::internal_server_error);
         }
         if (finished_) {
@@ -69,8 +70,9 @@ struct reply::impl {
     void
     add_cookie(cookie&& c)
     {
-        if (!response_sent_) {
+        if (!response_sent_.test_and_set()) {
             cookies_.insert(std::move(c));
+            response_sent_.clear();
         }
     }
 
@@ -102,9 +104,8 @@ struct reply::impl {
         for (auto c: cookies_) {
             resp_->add_cookie(c);
         }
-        if (send_response_) {
+        if (send_response_ && response_sent_.test_and_set()) {
             send_response_(resp_);
-            response_sent_ = true;
         }
         if (finished_) {
             try {
@@ -116,9 +117,8 @@ struct reply::impl {
     void
     send_error(response_status status)
     {
-        if (send_error_) {
+        if (send_error_ && response_sent_.test_and_set()) {
             send_error_(status);
-            response_sent_ = true;
         }
         if (finished_) {
             try {
