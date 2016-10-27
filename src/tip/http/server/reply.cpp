@@ -24,6 +24,8 @@ namespace tip {
 namespace http {
 namespace server {
 
+LOCAL_LOGGING_FACILITY(HTTPRPLY, TRACE);
+
 struct reply::impl {
     using cookies_type = std::set< cookie, cookie_name_cmp >;
     using vector_buff_type = boost::iostreams::stream_buffer<
@@ -58,6 +60,7 @@ struct reply::impl {
     ~impl()
     {
         if (!response_sent_ && send_error_) {
+            local_log(logger::WARNING) << "Send error from reply destructor";
             send_error_(response_status::internal_server_error);
         }
         if (finished_) {
