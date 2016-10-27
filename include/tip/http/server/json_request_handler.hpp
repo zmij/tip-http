@@ -102,17 +102,11 @@ public:
     }
 
     template < typename Context >
-    friend Context&
-    use_context(json_reply& r)
-    {
-        return use_context<Context>(r.r_);
-    }
-    template < typename Context >
     friend bool
-    has_context(json_reply& r)
-    {
-        return has_context<Context>(r.r_);
-    }
+    has_context(json_reply& r);
+    template < typename Context >
+    friend Context&
+    use_context(json_reply& r);
 private:
     void
     log_already_sent() const;
@@ -122,6 +116,19 @@ private:
     shared_flag     sent_;
 };
 
+template < typename Context >
+bool
+has_context(json_reply& r)
+{
+    return has_context<Context>(r.r_);
+}
+
+template < typename Context >
+Context&
+use_context(json_reply& r)
+{
+    return use_context<Context>(r.r_);
+}
 
 template < typename T >
 struct json_request_handler {
