@@ -207,18 +207,28 @@ public:
 
     template < typename T >
     void
-    load(T& val)
+    input(T& val)
     {
         load_impl(val,
-                detail::load_type_selector<input_arhive_type, T>{});
+                detail::load_type_selector<input_arhive_type,
+                    typename ::std::decay<T>::type>{});
     }
 
     template < typename T >
     void
-    save(T&& val)
+    output(T&& val)
     {
         save_impl(::std::forward<T>(val),
-                detail::save_type_selector<output_archive_type, T>{});
+                detail::save_type_selector<output_archive_type,
+                    typename ::std::decay<T>::type>{});
+    }
+
+    template < typename T >
+    json_body_context&
+    operator << (T&& val)
+    {
+        output(::std::forward<T>(val));
+        return *this;
     }
 private:
     template < typename T >
@@ -302,6 +312,17 @@ public:
     name() const;
 };
 
+struct json_error_sender {
+    static void
+    send_error(::tip::http::server::reply r, ::tip::http::server::error const& e)
+    {
+        e.log_error();
+        json_body_context& json = use_context<json_body_context>(r);
+        json << e;
+        r.done(e.status());
+    }
+};
+
 template < typename BodyType, bool allow_empty_body = false >
 class json_transformer {
 public:
@@ -315,7 +336,7 @@ public:
         if ((bool)json) {
             pointer req(std::make_shared< request_type >());
             try {
-                json.load(*req);
+                json.input(*req);
                 return req;
             } catch (std::exception const& e) {
                 throw json_error(e.what());
@@ -339,10 +360,7 @@ public:
     static void
     error(reply r, class error const& e)
     {
-        e.log_error();
-        json_body_context& json = use_context< json_body_context >(r);
-        save(json.outgoing(), e);
-        r.done(e.status());
+        json_error_sender::send_error(r, e);
     }
 };
 
