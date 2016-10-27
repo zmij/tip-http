@@ -52,7 +52,7 @@ struct reply::impl {
     impl(io_service_ptr io_service, request_const_ptr req,
             send_response_func sr, send_error_func se) :
         io_service_(io_service), req_(req), resp_(new response{ {1,1} }),
-        send_response_(sr), send_error_(se), response_sent_{},
+        send_response_(sr), send_error_(se), response_sent_{false},
         output_buffer_(resp_->body_), output_stream_(&output_buffer_)
     {
     }
@@ -183,6 +183,12 @@ reply::body_type const&
 reply::request_body() const
 {
     return pimpl_->req_->body_;
+}
+
+::std::size_t
+reply::serial() const
+{
+    return pimpl_->req_->serial;
 }
 
 void
