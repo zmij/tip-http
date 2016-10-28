@@ -291,10 +291,11 @@ void
 CEREAL_SAVE_FUNCTION_NAME(Archive& ar, error const& e)
 {
     ar(
-        ::cereal::make_nvp("error", e.name()),
-        ::cereal::make_nvp("severity", e.severity()),
-        ::cereal::make_nvp("category", e.category()),
-        ::cereal::make_nvp("message", std::string(e.what()))
+        ::cereal::make_nvp("code",      e.code()                ),
+        ::cereal::make_nvp("error",     e.name()                ),
+        ::cereal::make_nvp("severity",  e.severity()            ),
+        ::cereal::make_nvp("category",  e.category()            ),
+        ::cereal::make_nvp("message",   std::string(e.what())   )
     );
 }
 
