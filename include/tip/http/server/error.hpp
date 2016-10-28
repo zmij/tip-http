@@ -28,6 +28,10 @@ public:
 	virtual std::string const&
 	name() const;
 
+	virtual int
+	code() const
+	{ return !0; }
+
 	log::logger::event_severity
 	severity() const
 	{ return severity_; }
@@ -39,7 +43,6 @@ public:
 	response_status
 	status() const
 	{ return status_; }
-
 
 	void
 	log_error(std::string const& message = "") const;
