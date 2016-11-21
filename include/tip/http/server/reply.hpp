@@ -64,6 +64,8 @@ public:
 
     tip::iri::path const&
     path() const;
+    query_type const&
+    query() const;
 
     headers const&
     request_headers() const;

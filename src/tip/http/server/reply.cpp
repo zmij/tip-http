@@ -173,6 +173,12 @@ reply::path() const
     return pimpl_->req_->path;
 }
 
+reply::query_type const&
+reply::query() const
+{
+    return pimpl_->req_->query;
+}
+
 headers const&
 reply::request_headers() const
 {
