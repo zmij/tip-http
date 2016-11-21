@@ -33,6 +33,10 @@ public:
     path() const
     { return r_.path(); }
 
+    reply::query_type const&
+    query() const
+    { return r_.query(); }
+
     headers const&
     request_headers() const
     { return r_.request_headers(); }
@@ -94,12 +98,19 @@ public:
             log_already_sent();
         }
     }
+    template < typename T >
+    void
+    operator()(T&& body, response_status status = response_status::ok) const
+    { done(::std::forward<T>(body), status); }
     void
     error(http::server::error const& e) const
     {
         e.log_error();
         done(e, e.status());
     }
+    void
+    operator()(http::server::error const& e) const
+    { error(e); }
 
     template < typename Context >
     friend bool
