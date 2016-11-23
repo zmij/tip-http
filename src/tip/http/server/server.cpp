@@ -43,7 +43,8 @@ server::server(io_service_ptr io_svc,
         std::string const& address, std::string const& port,
         std::size_t thread_pool_size,
         request_handler_ptr handler,
-        stop_function stop)
+        stop_function stop,
+        bool reg_signals)
         : io_service_(io_svc),
             thread_pool_size_(thread_pool_size),
             signals_(*io_service_),
@@ -51,6 +52,23 @@ server::server(io_service_ptr io_svc,
             new_connection_(),
             request_handler_(handler),
             stop_(stop)
+{
+    if (reg_signals)
+        register_signals();
+    // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
+    boost::asio::ip::tcp::resolver resolver(*io_service_);
+    boost::asio::ip::tcp::resolver::query query(address, port);
+    boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
+    acceptor_.open(endpoint.protocol());
+    acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
+    acceptor_.bind(endpoint);
+
+    acceptor_.listen();
+    start_accept();
+}
+
+void
+server::register_signals()
 {
     // Register to handle the signals that indicate when the server should exit.
     // It is safe to register for the same signal multiple times in a program,
@@ -61,17 +79,6 @@ server::server(io_service_ptr io_svc,
     signals_.add(SIGQUIT);
 #endif // defined(SIGQUIT)
     signals_.async_wait(boost::bind(&server::handle_stop, this));
-
-    // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
-    boost::asio::ip::tcp::resolver resolver(*io_service_);
-    boost::asio::ip::tcp::resolver::query query(address, port);
-    boost::asio::ip::tcp::endpoint endpoint = *resolver.resolve(query);
-    acceptor_.open(endpoint.protocol());
-    acceptor_.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-    acceptor_.bind(endpoint);
-    acceptor_.listen();
-
-    start_accept();
 }
 
 server::endpoint
@@ -134,10 +141,17 @@ server::handle_accept(const boost::system::error_code& e,
 }
 
 void
+server::stop_accept()
+{
+    local_log(logger::DEBUG) << "Close HTTP acceptor";
+    acceptor_.close();
+}
+
+void
 server::handle_stop()
 {
     local_log(logger::INFO) << "Server stopping";
-    acceptor_.close();
+    stop_accept();
     if (stop_) {
         stop_();
     } else {
