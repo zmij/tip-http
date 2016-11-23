@@ -44,7 +44,8 @@ public:
             std::string const& port,
             std::size_t thread_pool_size,
             request_handler_ptr handler,
-            stop_function = stop_function());
+            stop_function = stop_function(),
+            bool reg_signals = true);
 
     /**
      * Run the server's io_service loop.
@@ -52,15 +53,20 @@ public:
     void
     run();
 
-    endpoint
-    local_endpoint() const;
-private:
     /**
      * Initiate an asynchronous accept operation.
      */
     void
     start_accept();
+    /**
+     * Cancel accepting new connections.
+     */
+    void
+    stop_accept();
 
+    endpoint
+    local_endpoint() const;
+private:
     /**
      * Handle completion of an asynchronous accept operation.
      * @param e
@@ -82,6 +88,8 @@ private:
     void
     handle_error(boost::system::error_code const& e, int signo);
 
+    void
+    register_signals();
 private:
     /** The io_service used to perform asynchronous operations. */
     io_service_ptr io_service_;
