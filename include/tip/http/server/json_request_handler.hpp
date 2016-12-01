@@ -91,6 +91,7 @@ public:
     done(T&& body, response_status status = response_status::ok) const
     {
         if (!sent_->test_and_set()) {
+            r_.add_header({ ContentType, "application/json; charset=utf8" });
             r_.response_body().clear();
             auto& json = use_context<json_body_context>(r_);
             json << ::std::forward<T>(body);
