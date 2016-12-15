@@ -13,6 +13,7 @@
 #include <vector>
 #include <boost/noncopyable.hpp>
 #include <memory>
+#include <atomic>
 #include <tip/http/server/connection.hpp>
 #include <tip/http/server/request_handler.hpp>
 
@@ -104,12 +105,13 @@ private:
     boost::asio::ip::tcp::acceptor acceptor_;
 
     /** The next connection to be accepted. */
-    connection_ptr new_connection_;
+    connection_ptr      new_connection_;
 
     /** The handler for all incoming requests. */
     request_handler_ptr request_handler_;
 
-    stop_function stop_;
+    stop_function       stop_;
+    ::std::atomic_flag  stopped_;
 };
 
 } // namespace server

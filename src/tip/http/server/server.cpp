@@ -51,7 +51,8 @@ server::server(io_service_ptr io_svc,
             acceptor_(*io_service_),
             new_connection_(),
             request_handler_(handler),
-            stop_(stop)
+            stop_(stop),
+            stopped_{false}
 {
     if (reg_signals)
         register_signals();
@@ -94,6 +95,7 @@ server::run()
     ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(*io_service_);
     ssl_svc.context().set_default_verify_paths();
 
+    stopped_.clear();
     // Create a pool of threads to run all of the io_services.
     std::vector< std::shared_ptr< std::thread > > threads;
     for (std::size_t i = 0; i < thread_pool_size_; ++i) {
@@ -150,12 +152,14 @@ server::stop_accept()
 void
 server::handle_stop()
 {
-    local_log(logger::INFO) << "Server stopping";
-    stop_accept();
-    if (stop_) {
-        stop_();
-    } else {
-        io_service_->stop();
+    if (!stopped_.test_and_set()) {
+        local_log(logger::INFO) << "Server stopping";
+        stop_accept();
+        if (stop_) {
+            stop_();
+        } else {
+            io_service_->stop();
+        }
     }
 }
 
