@@ -43,6 +43,7 @@ server::server(io_service_ptr io_svc,
         std::string const& address, std::string const& port,
         std::size_t thread_pool_size,
         request_handler_ptr handler,
+        bool start_accept_,
         stop_function stop,
         bool reg_signals)
         : io_service_(io_svc),
@@ -56,6 +57,7 @@ server::server(io_service_ptr io_svc,
 {
     if (reg_signals)
         register_signals();
+
     // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
     boost::asio::ip::tcp::resolver resolver(*io_service_);
     boost::asio::ip::tcp::resolver::query query(address, port);
@@ -65,7 +67,7 @@ server::server(io_service_ptr io_svc,
     acceptor_.bind(endpoint);
 
     acceptor_.listen();
-    start_accept();
+    if(start_accept_) start_accept();
 }
 
 void
@@ -123,6 +125,7 @@ server::run()
 void
 server::start_accept()
 {
+    local_log(logger::DEBUG) << "Open HTTP acceptor";
     new_connection_.reset(new connection(io_service_, request_handler_));
     auto endpoint = std::make_shared<boost::asio::ip::tcp::endpoint>();
     acceptor_.async_accept(new_connection_->socket(), *endpoint,

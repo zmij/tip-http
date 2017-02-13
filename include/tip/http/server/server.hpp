@@ -45,6 +45,7 @@ public:
             std::string const& port,
             std::size_t thread_pool_size,
             request_handler_ptr handler,
+            bool start_accept_,
             stop_function = stop_function(),
             bool reg_signals = true);
 
