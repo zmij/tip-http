@@ -126,6 +126,12 @@ void
 server::start_accept()
 {
     local_log(logger::DEBUG) << "Open HTTP acceptor";
+    start_accept_silent();
+}
+
+void
+server::start_accept_silent()
+{
     new_connection_.reset(new connection(io_service_, request_handler_));
     auto endpoint = std::make_shared<boost::asio::ip::tcp::endpoint>();
     acceptor_.async_accept(new_connection_->socket(), *endpoint,
@@ -138,11 +144,9 @@ server::handle_accept(const boost::system::error_code& e,
         endpoint_ptr endpoint)
 {
     if (!e)
-    {
         new_connection_->start(endpoint);
-    }
 
-    start_accept();
+    start_accept_silent();
 }
 
 void

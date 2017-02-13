@@ -77,6 +77,12 @@ private:
     handle_accept(boost::system::error_code const& e, endpoint_ptr);
 
     /**
+     * Initiate an asynchronous accept operation.
+     */
+    void
+    start_accept_silent();
+
+    /**
      * Handle a request to stop the server.
      */
     void
