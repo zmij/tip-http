@@ -44,7 +44,7 @@ public:
 	status() const
 	{ return status_; }
 
-	void
+	virtual void
 	log_error(std::string const& message = "") const;
 private:
 	std::string						category_;
