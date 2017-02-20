@@ -93,6 +93,8 @@ public:
 
     add_handlers_helper&
     operator()(request_method method, std::string const& path, handler_closure func);
+    add_handlers_helper&
+    operator()(request_method_set methods, std::string const& path, handler_closure func);
 private:
     add_handlers_helper(request_dispatcher_ptr);
 private:

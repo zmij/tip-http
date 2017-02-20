@@ -191,6 +191,14 @@ request_dispatcher::add_handlers_helper::operator ()
     return *this;
 }
 
+request_dispatcher::add_handlers_helper&
+request_dispatcher::add_handlers_helper::operator ()
+    (request_method_set methods, std::string const& path, handler_closure func)
+{
+    owner_->add_handler(methods, path, func);
+    return *this;
+}
+
 } /* namespace server */
 } /* namespace http */
 } /* namespace tip */
