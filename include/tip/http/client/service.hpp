@@ -52,7 +52,7 @@ public:
         -> decltype( ::std::declval< _Promise< response_ptr > >().get_future() )
     {
         auto promise = ::std::make_shared< _Promise< response_ptr > >();
-        get(url,
+        get_async(url,
         [promise](response_ptr resp)
         {
             promise->set_value(resp);
@@ -65,7 +65,7 @@ public:
         return promise->get_future();
     }
     void
-    get(::std::string const& url, response_callback,
+    get_async(::std::string const& url, response_callback,
             error_callback = nullptr, bool run_sync = false);
 
     response_ptr
