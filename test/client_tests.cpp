@@ -102,7 +102,7 @@ TEST(HttpClient, GetRequest)
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
     bool error = false;
-    svc.get("http://google.com/",
+    svc.get_async("http://google.com/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
@@ -127,7 +127,7 @@ TEST(HttpClient, FailConnecting)
     response_ptr resp;
     bool error = false;
     for (int i = 0; i < 10; ++i) {
-        svc.get("http://127.0.0.1:65535/",
+        svc.get_async("http://127.0.0.1:65535/",
         [&](response_ptr r){
             local_log() << "Received a response: Content-Length: "
                     << r->content_length() << " body size " << r->body_.size();
@@ -152,7 +152,7 @@ TEST(HttpsClient, FailVerifyCert)
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
     bool error = false;
-    svc.get("https://mail.ru/",
+    svc.get_async("https://mail.ru/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
@@ -179,7 +179,7 @@ TEST(HttpsClient, VerifyCertOK)
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
     bool error = false;
-    svc.get("https://mail.ru/",
+    svc.get_async("https://mail.ru/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size()
@@ -209,7 +209,7 @@ TEST(HttpsClient, GetAppleCert)
 
     response_ptr resp;
     bool error = false;
-    svc.get("https://static.gc.apple.com/public-key/ggc-prod-2.cer",
+    svc.get_async("https://static.gc.apple.com/public-key/ggc-prod-2.cer",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size()

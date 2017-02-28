@@ -301,7 +301,7 @@ service::get(::std::string const& url)
 }
 
 void
-service::get(std::string const& url, response_callback cb, error_callback eb, bool run_sync)
+service::get_async(std::string const& url, response_callback cb, error_callback eb, bool run_sync)
 {
     pimpl_->get(url, cb, eb, run_sync);
 }
