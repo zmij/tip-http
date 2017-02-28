@@ -13,6 +13,7 @@
 #include <tip/http/server/reply_context.hpp>
 #include <tip/http/server/error.hpp>
 #include <cereal/archives/json.hpp>
+#include <cereal/types/locale_message.hpp>
 
 #include <memory>
 
@@ -290,13 +291,15 @@ template < typename Archive >
 void
 CEREAL_SAVE_FUNCTION_NAME(Archive& ar, error const& e)
 {
-    ar(
-        ::cereal::make_nvp("code",      e.code()                ),
-        ::cereal::make_nvp("error",     e.name()                ),
-        ::cereal::make_nvp("severity",  e.severity()            ),
-        ::cereal::make_nvp("category",  e.category()            ),
-        ::cereal::make_nvp("message",   std::string(e.what())   )
-    );
+    ar(     ::cereal::make_nvp("code",      e.code()                ));
+    ar(     ::cereal::make_nvp("error",     e.name()                ));
+    ar(     ::cereal::make_nvp("severity",  e.severity()            ));
+    ar(     ::cereal::make_nvp("category",  e.category()            ));
+
+    if(e.is_localized())
+        ar( ::cereal::make_nvp("message",   e.message_l10n()        ));
+    else
+        ar( ::cereal::make_nvp("message",   std::string(e.what())   ));
 }
 
 class json_error : public client_error {

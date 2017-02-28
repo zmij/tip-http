@@ -16,7 +16,7 @@
 namespace cereal {
 namespace detail {
 
-void
+inline void
 read_l10n(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 {
 	if (sz < 1) {
@@ -27,7 +27,7 @@ read_l10n(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 	msg = boost::locale::message(id);
 }
 
-void
+inline void
 read_l10nn(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 {
 	if (sz < 3) {
@@ -39,7 +39,7 @@ read_l10nn(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 	msg = boost::locale::message(single, plural, n);
 }
 
-void
+inline void
 read_l10nc(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 {
 	if (sz < 2) {
@@ -50,7 +50,7 @@ read_l10nc(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 	msg = boost::locale::message(context, id);
 }
 
-void
+inline void
 read_l10nnc(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 {
 	if (sz < 4) {
@@ -68,12 +68,19 @@ read_l10nnc(JSONInputArchive& ar, boost::locale::message& msg, size_type sz)
 //	Read a localized message source from JSON
 //	JSON format
 //----------------------------------------------------------------------------
-void
-prologue(JSONInputArchive& ar, boost::locale::message const& msg)
-{
-}
+inline void
+prologue(JSONInputArchive&,  boost::locale::message const&) {}
 
-void
+inline void
+epilogue(JSONInputArchive&,  boost::locale::message const&) {}
+
+inline void
+prologue(JSONOutputArchive&, boost::locale::message const&) {}
+
+inline void
+epilogue(JSONOutputArchive&, boost::locale::message const&) {}
+
+inline void
 CEREAL_LOAD_FUNCTION_NAME(JSONInputArchive& ar, boost::locale::message& msg)
 {
 	if (ar.nodeValue().IsArray()) {
@@ -103,12 +110,15 @@ CEREAL_LOAD_FUNCTION_NAME(JSONInputArchive& ar, boost::locale::message& msg)
 	}
 }
 
-void
-epilogue(JSONInputArchive& ar, boost::locale::message const& msg)
+inline void
+CEREAL_SAVE_FUNCTION_NAME(JSONOutputArchive& ar, boost::locale::message const& msg)
 {
+    std::ostringstream os;
+    os.imbue(ar.getloc());
+    os << msg;
+    ar(os.str());
 }
 
 }  // namespace cereal
-
 
 #endif /* CEREAL_INCLUDE_CEREAL_TYPES_LOCALE_MESSAGE_HPP_ */
