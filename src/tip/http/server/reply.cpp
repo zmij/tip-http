@@ -46,6 +46,7 @@ struct reply::impl {
     std::ostream        output_stream_;
     cookies_type        cookies_;
     detail::context_registry registry_;
+    std::string         language_{};
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -183,6 +184,18 @@ headers const&
 reply::request_headers() const
 {
     return pimpl_->req_->headers_;
+}
+
+std::string const&
+reply::language() const
+{
+    return pimpl_->language_;
+}
+
+void
+reply::set_language(std::string const& lang)
+{
+    pimpl_->language_ = lang;
 }
 
 reply::body_type const&

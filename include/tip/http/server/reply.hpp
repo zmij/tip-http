@@ -70,6 +70,11 @@ public:
     headers const&
     request_headers() const;
 
+    std::string const&
+    language() const;
+
+    void
+    set_language(std::string const&);
     // TODO query
     // TODO fragment
     // TODO cookies

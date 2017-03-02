@@ -169,6 +169,7 @@ struct locale_manager::impl {
 			lname = negotiate_locale(lctx.languages());
 		}
 		r.add_header({ http::ContentLanguage, lname.language });
+		r.set_language(lname.language);
 		r.response_stream().imbue( gen_((std::string)lname));
 	}
 };
