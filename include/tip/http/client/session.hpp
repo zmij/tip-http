@@ -10,8 +10,6 @@
 
 #include <memory>
 #include <boost/asio/io_service.hpp>
-#include <boost/noncopyable.hpp>
-
 #include <tip/http/common/request.hpp>
 
 namespace tip {

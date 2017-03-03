@@ -10,6 +10,7 @@ set(
     service.cpp
     session.cpp
     session_pool.cpp
+    transport.cpp
 )
 
 add_library(${HTTP_CLIENT_LIB} SHARED ${client_lib_SRCS})

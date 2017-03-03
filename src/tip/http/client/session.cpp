@@ -7,6 +7,7 @@
 
 #include <tip/http/client/session.hpp>
 #include <tip/http/client/errors.hpp>
+#include <tip/http/client/transport.hpp>
 
 #include <tip/http/common/request.hpp>
 #include <tip/http/common/response.hpp>
@@ -30,155 +31,6 @@ namespace http {
 namespace client {
 
 LOCAL_LOGGING_FACILITY(HTTPSSN, TRACE);
-
-struct tcp_transport {
-    using io_service = boost::asio::io_service;
-    using tcp = boost::asio::ip::tcp;
-    using error_code = boost::system::error_code;
-    using connect_callback = std::function<void(::std::exception_ptr)>;
-    using socket_type = tcp::socket;
-
-    tcp::resolver resolver_;
-    socket_type socket_;
-
-    tcp_transport(io_service& io_service, session::connection_id const& conn_id,
-            connect_callback cb) :
-            resolver_(io_service), socket_(io_service)
-    {
-        tcp::resolver::query
-            qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
-        resolver_.async_resolve(qry, std::bind(
-            &tcp_transport::handle_resolve, this,
-                std::placeholders::_1, std::placeholders::_2, cb
-        ));
-    }
-
-    void
-    handle_resolve(error_code const& ec,
-            tcp::resolver::iterator endpoint_iterator,
-            connect_callback cb)
-    {
-        if (!ec) {
-            boost::asio::async_connect(socket_, endpoint_iterator, std::bind(
-                &tcp_transport::handle_connect, this,
-                    std::placeholders::_1, cb
-            ));
-        } else if (cb) {
-            local_log(logger::ERROR) << "Failed to resolve";
-            cb(::std::make_exception_ptr( errors::resolve_failed(ec.message()) ));
-        }
-    }
-
-    void
-    handle_connect(error_code const& ec, connect_callback cb)
-    {
-        if (cb) {
-            if (!ec) {
-                cb(nullptr);
-            } else {
-                cb(::std::make_exception_ptr( errors::connection_refused(ec.message()) ));
-            }
-        }
-    }
-    void
-    disconnect()
-    {
-        if (socket_.is_open()) {
-            socket_.close();
-        }
-    }
-};
-
-struct ssl_transport {
-    using io_service = boost::asio::io_service;
-    using tcp = boost::asio::ip::tcp;
-    using error_code = boost::system::error_code;
-    using connect_callback = std::function<void(::std::exception_ptr)>;
-    using socket_type = boost::asio::ssl::stream< tcp::socket >;
-
-    tcp::resolver resolver_;
-    socket_type socket_;
-
-    ssl_transport(io_service& io_service, session::connection_id const& conn_id, connect_callback cb) :
-        resolver_(io_service),
-        socket_( io_service,
-                boost::asio::use_service<tip::ssl::ssl_context_service>(io_service).context() )
-    {
-        tcp::resolver::query
-            qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
-        resolver_.async_resolve(qry, std::bind(
-            &ssl_transport::handle_resolve, this,
-                std::placeholders::_1, std::placeholders::_2, cb
-        ));
-    }
-
-    void
-    handle_resolve(error_code const& ec,
-            tcp::resolver::iterator endpoint_iterator,
-            connect_callback cb)
-    {
-        if (!ec) {
-            socket_.set_verify_mode(boost::asio::ssl::verify_peer);
-            socket_.set_verify_callback(std::bind(
-                &ssl_transport::verify_certificate,
-                this, std::placeholders::_1, std::placeholders::_2
-            ));
-            boost::asio::async_connect(socket_.lowest_layer(),
-                endpoint_iterator, std::bind(
-                &ssl_transport::handle_connect, this,
-                    std::placeholders::_1, cb
-            ));
-        } else if (cb) {
-            cb(::std::make_exception_ptr( errors::resolve_failed(ec.message()) ));
-        }
-    }
-
-    bool
-    verify_certificate(bool preverified, boost::asio::ssl::verify_context& ctx)
-    {
-        // The verify callback can be used to check whether the certificate that is
-        // being presented is valid for the peer. For example, RFC 2818 describes
-        // the steps involved in doing this for HTTPS. Consult the OpenSSL
-        // documentation for more details. Note that the callback is called once
-        // for each certificate in the certificate chain, starting from the root
-        // certificate authority.
-
-        // In this example we will simply print the certificate's subject name.
-        char subject_name[256];
-        X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-        X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
-        local_log() << "Verifying " << subject_name;
-        return preverified;
-    }
-    void
-    handle_connect(error_code const& ec, connect_callback cb)
-    {
-        if (!ec) {
-            socket_.async_handshake(boost::asio::ssl::stream_base::client,
-                std::bind(&ssl_transport::handle_handshake, this,
-                    std::placeholders::_1, cb));
-        } else if (cb) {
-            cb(::std::make_exception_ptr( errors::connection_refused(ec.message()) ));
-        }
-    }
-    void
-    handle_handshake(error_code const& ec, connect_callback cb)
-    {
-        if (cb) {
-            if (!ec) {
-                cb(nullptr);
-            } else {
-                cb(::std::make_exception_ptr( errors::ssl_handshake_failed(ec.message()) ));
-            }
-        }
-    }
-    void
-    disconnect()
-    {
-        if (socket_.lowest_layer().is_open())
-            socket_.lowest_layer().close();
-    }
-};
 
 //-----------------------------------------------------------------------------
 namespace events {
@@ -407,17 +259,24 @@ struct session_fsm_ : afsm::def::state_machine< session_fsm_<TransportType, Shar
     >;
 
     //@}
-    session_fsm_(io_service& io_service, request::iri_type const& iri,
-            session::session_callback on_idle, session::session_error on_close,
+    session_fsm_(io_service& io_service,
+            iri::scheme const& scheme,
+            ::std::string const& host,
+            ::std::string const& service,
+            session::session_callback on_idle,
+            session::session_error on_close,
             headers const& default_headers) :
         io_service_{io_service},
         strand_{io_service},
-        transport_{io_service, session::create_connection_id(iri),
+        transport_{io_service, host, service,
             strand_.wrap(
                 std::bind( &session_fsm_::handle_connect,
                         this, std::placeholders::_1 ))},
-        host_{iri.authority.host}, scheme_{iri.scheme},
-        default_headers_{default_headers}, on_idle_(on_idle), on_close_{on_close},
+        host_{host},
+        scheme_{scheme},
+        default_headers_{default_headers},
+        on_idle_(on_idle),
+        on_close_{on_close},
         req_count_{0}
     {
     }
@@ -627,10 +486,14 @@ public:
             session_impl< TransportType > >, ::std::mutex >;
     using this_type = session_impl< TransportType >;
 
-    session_impl(io_service& io_service, request::iri_type const& iri,
+    session_impl(io_service& io_service,
+            iri::scheme const& scheme,
+            ::std::string const& host,
+            ::std::string const& service,
             session_callback on_idle, session_error on_close,
             headers const& default_headers) :
-        base_type(std::ref(io_service), iri, on_idle, on_close, default_headers)
+        base_type(std::ref(io_service), scheme, host, service,
+                on_idle, on_close, default_headers)
     {
     }
 
@@ -708,10 +571,13 @@ session::create(io_service& svc, request::iri_type const& iri,
 
     local_log() << "Create session " << iri.scheme << "://" << iri.authority.host
             << iri.path;
+    auto id = create_connection_id(iri);
     if (iri.scheme == tip::iri::scheme{ "http" }) {
-        return std::make_shared< http_session >( svc, iri, on_idle, on_close, default_headers );
+        return std::make_shared< http_session >( svc,
+            iri.scheme, id.first, id.second, on_idle, on_close, default_headers );
     } else if (iri.scheme == tip::iri::scheme{ "https" }) {
-        return std::make_shared< https_session >( svc, iri, on_idle, on_close, default_headers );
+        return std::make_shared< https_session >( svc,
+                iri.scheme, id.first, id.second, on_idle, on_close, default_headers );
     }
     // TODO Throw an exception
     local_log(logger::ERROR) << "Unsupported scheme for HTTP client " << iri.scheme;
