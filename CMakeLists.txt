@@ -29,6 +29,13 @@ endif()
 if(NOT TIP_UTIL_INCLUDE_DIRS)
     set(TIP_UTIL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/include)
 endif()
+if(NOT AFSM_INCLUDE_DIRS)
+    set(AFSM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/afsm/include)
+endif()
+if (NOT METAPUSHKIN_FOUND)
+    add_subdirectory(lib/afsm/lib/meta)
+endif()
+
 
 if (NOT TIP_IRI_LIB)
     set(TIP_IRI_LIB tip-iri)
@@ -84,6 +91,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}/include
+    ${AFSM_INCLUDE_DIRS}
+    ${METAPUSHKIN_INCLUDE_DIRS}
     ${TIP_IRI_INCLUDE_DIRS}
     ${TIP_LOG_INCLUDE_DIRS}
     ${TIP_SSL_INCLUDE_DIRS}

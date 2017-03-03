@@ -21,10 +21,9 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/support_istream_iterator.hpp>
 
-#include <boost/msm/back/state_machine.hpp>
-#include <boost/msm/front/state_machine_def.hpp>
-#include <boost/msm/front/functor_row.hpp>
-#include <boost/msm/front/euml/operator.hpp>
+#include <afsm/fsm.hpp>
+
+#include <mutex>
 
 namespace tip {
 namespace http {
@@ -199,96 +198,66 @@ struct response {
 }  // namespace events
 
 template < typename TransportType, typename SharedType >
-struct session_fsm_ :
-        public boost::msm::front::state_machine_def< session_fsm_<TransportType, SharedType >>,
+struct session_fsm_ : afsm::def::state_machine< session_fsm_<TransportType, SharedType >>,
         public std::enable_shared_from_this< SharedType > {
     using transport_type        = TransportType;
     using shared_type           = SharedType;
     using shared_base           = std::enable_shared_from_this< shared_type >;
-    using session_fsm           = boost::msm::back::state_machine< session_fsm_< transport_type, shared_type > >;
+    using session_fsm           = ::afsm::state_machine< session_fsm_< transport_type, shared_type >, ::std::mutex >;
     using io_service            = boost::asio::io_service;
     using buffer_type           = boost::asio::streambuf;
     using buffer_ptr            = std::shared_ptr< buffer_type >;
     using output_buffers_type   = std::vector< boost::asio::const_buffer >;
     using error_code            = boost::system::error_code;
     //@{
-    /** @name Aliases for MSM types */
+    /** @name Aliases for AFSM types */
+    using none = ::afsm::none;
+
+    template < typename StateDef, typename ... Tags >
+    using state = ::afsm::def::state<StateDef, Tags...>;
+    template < typename MachineDef, typename ... Tags >
+    using state_machine = ::afsm::def::state_machine<MachineDef, Tags...>;
     template < typename ... T >
-    using Row = boost::msm::front::Row< T ... >;
-    template < typename ... T >
-    using Internal = boost::msm::front::Internal< T ... >;
-    using none                  = boost::msm::front::none;
-    template < typename T >
-    using Not = boost::msm::front::euml::Not_< T >;
+    using transition_table = ::afsm::def::transition_table<T...>;
+    template < typename Event, typename Action = none, typename Guard = none >
+    using in = ::afsm::def::internal_transition< Event, Action, Guard>;
+    template <typename SourceState, typename Event, typename TargetState,
+            typename Action = none, typename Guard = none>
+    using tr = ::afsm::def::transition<SourceState, Event, TargetState, Action, Guard>;
+
+    template < typename Predicate >
+    using not_ = ::psst::meta::not_<Predicate>;
     //@}
 
     //@{
     /** @name States */
-    struct unplugged : public boost::msm::front::state<> {
-        typedef boost::mpl::vector<
+    struct unplugged : state< unplugged > {
+        using deferred_events = ::psst::meta::type_tuple <
             events::request
-        > deferred_events;
-        void
-        on_exit(events::transport_error const&, session_fsm& fsm)
-        {
-            local_log() << "exiting unplugged (error) deferred events: "
-                    << fsm.get_deferred_queue().size();
-        }
-        template < typename Event >
-        void
-        on_exit(Event const&, session_fsm&)
-        {
-            local_log() << "exiting unplugged";
-        }
+        >;
     };
-    struct online_ : public boost::msm::front::state_machine_def<online_> {
-        using online = boost::msm::back::state_machine< online_ >;
+    struct online : public state_machine< online > {
         template < typename Event >
         void
-        on_entry(Event const&, session_fsm& fsm)
+        on_enter(Event const&, session_fsm& fsm)
         {
-            local_log() << "entering online";
             session_ = &fsm;
-        }
-        template < typename Event, typename FSM >
-        void
-        on_exit(Event const&, FSM&)
-        {
-            local_log() << "exiting online";
         }
         //@{
         /** @name States */
-        struct wait_request : public boost::msm::front::state<> {
-            template < typename Event >
+        struct wait_request : state< wait_request > {
+            template < typename Event, typename FSM >
             void
-            on_entry(Event const&, online& fsm)
+            on_enter(Event const&, FSM& fsm)
             {
-                local_log() << "entering wait_request";
                 fsm.session_->idle();
             }
-            template < typename Event, typename FSM >
-            void
-            on_exit(Event const&, FSM&)
-            {
-                local_log() << "exiting wait_request";
-            }
         };
-        struct wait_response : public boost::msm::front::state<> {
-            template < typename Event, typename FSM >
-            void
-            on_entry(Event const&, FSM&)
-            { local_log() << "entering wait_response"; }
-
-            template < typename Event, typename FSM >
-            void
-            on_exit(Event const&, FSM&)
-            { local_log() << "exiting wait_response"; }
-
+        struct wait_response : state< wait_response > {
             template < typename FSM >
             void
             on_exit(events::transport_error const& evt, FSM&)
             {
-                local_log() << "exiting wait_response (on error)";
                 if (req_.fail_) {
                     req_.fail_(evt.error);
                 }
@@ -305,9 +274,9 @@ struct session_fsm_ :
         //@{
         /** @name Actions */
         struct send_request {
-            template < typename SourceState >
+            template < typename FSM, typename SourceState >
             void
-            operator()(events::request const& req, online& fsm, SourceState&,
+            operator()(events::request const& req, FSM& fsm, SourceState&,
                     wait_response& resp_state)
             {
                 fsm.session_->send_request(*req.request_.get());
@@ -315,9 +284,9 @@ struct session_fsm_ :
             }
         };
         struct process_reply {
-            template < typename TargetState >
+            template < typename FSM, typename TargetState >
             void
-            operator()(events::response const& resp, online& fsm, wait_response& resp_state,
+            operator()(events::response const& resp, FSM& fsm, wait_response& resp_state,
                     TargetState&)
             {
                 local_log() << "Reply to "
@@ -343,26 +312,23 @@ struct session_fsm_ :
             }
         };
         //@}
-        struct transition_table : boost::mpl::vector <
-            /*        Start            Event                Next            Action            Guard          */
-            /*  +-----------------+-------------------+---------------+---------------+-------------+ */
-            Row <    wait_request,    events::request,    wait_response,    send_request,    none        >,
-            Row <    wait_response,   events::response,   wait_request,     process_reply,   none        >
-        > {};
+        using transitions = transition_table <
+            /*  Start             Event               Next            Action          Guard   */
+            /*+-----------------+-------------------+---------------+---------------+-------+ */
+            tr< wait_request    , events::request   , wait_response , send_request  , none  >,
+            tr< wait_response   , events::response  , wait_request  , process_reply , none  >
+        >;
 
-        online_() : session_(nullptr) {}
+        online() : session_(nullptr) {}
         session_fsm* session_;
     };
-    using online = boost::msm::back::state_machine< online_ >;
 
-    struct connection_failed : boost::msm::front::state<> {
+    struct connection_failed : state< connection_failed > {
         ::std::exception_ptr error;
 
         void
-        on_entry(events::transport_error const& evt, session_fsm& fsm)
+        on_enter(events::transport_error const& evt, session_fsm& fsm)
         {
-            local_log() << "entering connection failed. deferred events "
-                    << fsm.get_deferred_queue().size();
             error = evt.error;
         }
         template< typename Event >
@@ -391,26 +357,23 @@ struct session_fsm_ :
                                 << "Error handler throwed an unexpected exception";
                     }
                 }
-                if (fsm.get_deferred_queue().empty()) {
-                    fsm.enqueue_event( events::disconnect{} );
-                }
             }
         };
-        struct internal_transition_table : ::boost::mpl::vector<
-            Internal< events::request, notify_request_failure, none >
-        > {};
+        using internal_transitions = transition_table<
+            in< events::request, notify_request_failure, none >
+        >;
     };
 
-    struct terminated : boost::msm::front::terminate_state<> {
+    struct terminated : ::afsm::def::terminal_state<terminated> {
         void
-        on_entry(events::transport_error const& evt, session_fsm& fsm)
+        on_enter(events::transport_error const& evt, session_fsm& fsm)
         {
             local_log() << "entering terminated (error)";
             fsm.notify_closed(evt.error);
         }
         template < typename Event >
         void
-        on_entry(Event const&, session_fsm& fsm)
+        on_enter(Event const&, session_fsm& fsm)
         {
             local_log() << "entering terminated";
             fsm.notify_closed(nullptr);
@@ -430,50 +393,19 @@ struct session_fsm_ :
     };
     //@}
     //@{
-    /** @name Guards */
-    struct events_pending {
-        template < class EVT, class SourceState, class TargetState>
-        bool
-        operator()(EVT const&, session_fsm& fsm, SourceState&, TargetState&)
-        {
-            return !fsm.get_deferred_queue().empty();
-        }
-    };
-    //@}
-    //@{
-    struct transition_table : boost::mpl::vector<
-        /*        Start            Event                    Next            Action                        Guard                  */
-        /*  +-----------------+-----------------------+---------------+---------------------------+---------------------+ */
-        Row <    unplugged,         events::connected,        online,            none,                        none                >,
+    using transitions = transition_table<
+        /*  Start                 Event                       Next                Action                  Guard       */
+        /*+---------------------+---------------------------+-------------------+-----------------------+-----------+ */
+        tr< unplugged           , events::connected         , online            , none                  , none      >,
         /* Transport errors */
-        Row <    unplugged,         events::
-                                    transport_error,    connection_failed,  none,                        events_pending      >,
-        Row <    unplugged,         events::
-                                    transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
-        Row <    online,            events::
-                                    transport_error,    connection_failed,  none,                        events_pending      >,
-        Row <    online,            events::
-                                    transport_error,    terminated,         disconnect_transport,        Not<events_pending> >,
+        tr< unplugged           , events::transport_error   , terminated        , disconnect_transport  , none      >,
+        tr< online              , events::transport_error   , connection_failed , disconnect_transport  , none      >,
         /* Disconnect */
-        Row <    unplugged,         events::disconnect, terminated,         none,                        none                >,
-        Row <    online,            events::disconnect, terminated,         disconnect_transport,        none                >,
-        Row <    connection_failed, events::disconnect, terminated,         none,                        none                >
-    >{};
+        tr< unplugged           , events::disconnect        , terminated        , none                  , none      >,
+        tr< online              , events::disconnect        , terminated        , disconnect_transport  , none      >,
+        tr< connection_failed   , events::disconnect        , terminated        , none                  , none      >
+    >;
 
-    template < typename Event, typename FSM >
-    void
-    no_transition(Event const& e, FSM&, int state)
-    {
-        local_log(logger::DEBUG) << "No transition from state " << state
-                << " on event " << typeid(e).name() << " (in transaction)";
-    }
-    template <class FSM,class Event>
-    void exception_caught (Event const& evt, FSM& , std::exception& ex )
-    {
-        local_log(logger::DEBUG) << "Exception caught on event "
-                << typeid(evt).name() << " " << typeid(ex).name()
-                << ": " << ex.what();
-    }
     //@}
     session_fsm_(io_service& io_service, request::iri_type const& iri,
             session::session_callback on_idle, session::session_error on_close,
@@ -684,14 +616,15 @@ private:
 protected:
     ::std::atomic<::std::size_t>        req_count_;
 };
+
 //-----------------------------------------------------------------------------
 template < typename TransportType >
 class session_impl : public session,
-        public boost::msm::back::state_machine< session_fsm_< TransportType,
-            session_impl< TransportType > > > {
+    public ::afsm::state_machine< session_fsm_< TransportType,
+            session_impl< TransportType > >, ::std::mutex > {
 public:
-    typedef boost::msm::back::state_machine< session_fsm_< TransportType,
-            session_impl< TransportType > > > base_type;
+    using base_type = ::afsm::state_machine< session_fsm_< TransportType,
+            session_impl< TransportType > >, ::std::mutex >;
     using this_type = session_impl< TransportType >;
 
     session_impl(io_service& io_service, request::iri_type const& iri,
