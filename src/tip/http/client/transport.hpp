@@ -42,6 +42,7 @@ struct tcp_transport {
     disconnect();
 };
 
+//----------------------------------------------------------------------------
 struct ssl_transport {
     using io_service = boost::asio::io_service;
     using tcp = boost::asio::ip::tcp;

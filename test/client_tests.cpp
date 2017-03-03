@@ -152,7 +152,7 @@ TEST(HttpsClient, FailVerifyCert)
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
     bool error = false;
-    svc.get_async("https://mail.ru/",
+    svc.get_async("https://nghttp2.org/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
@@ -179,7 +179,7 @@ TEST(HttpsClient, VerifyCertOK)
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
     bool error = false;
-    svc.get_async("https://mail.ru/",
+    svc.get_async("https://nghttp2.org/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size()
