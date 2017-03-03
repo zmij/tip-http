@@ -5,10 +5,13 @@
 
 cmake_minimum_required(VERSION 2.6)
 
+set(lib_name iri)
+string(TOUPPER ${lib_name} LIB_NAME)
+
 if (NOT PROJECT_PREFIX)
     set(PROJECT_PREFIX tip)
 endif()
-set(_pname ${PROJECT_PREFIX}-iri)
+set(_pname ${PROJECT_PREFIX}-${lib_name})
 if (PROJECT_VERSION)
     set(_pversion ${PROJECT_VERSION})
 else()
@@ -36,7 +39,7 @@ find_package(Boost 1.58 COMPONENTS ${BOOST_COMPONENTS} REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR})
 add_definitions("-std=c++11")
 
-set(TIP_IRI_LIB ${PROJECT_PREFIX}-iri)
+set(TIP_${LIB_NAME}_LIB ${PROJECT_PREFIX}-${lib_name})
 
 add_subdirectory(include/tip)
 add_subdirectory(src)
@@ -44,12 +47,14 @@ add_subdirectory(src)
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
+    set(${LIB_NAME}_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/test)
+else()
+    set(${LIB_NAME}_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
 get_directory_property(has_parent PARENT_DIRECTORY)
-
 if (has_parent)
-    set(TIP_IRI_LIB ${PROJECT_PREFIX}-iri PARENT_SCOPE)
-    set(TIP_IRI_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+    set(TIP_${LIB_NAME}_LIB ${PROJECT_PREFIX}-${lib_name} CACHE INTERNAL "Name of tip-iri library target")
+    set(TIP_${LIB_NAME}_INCLUDE_DIRS ${${LIB_NAME}_INCLUDES} CACHE INTERNAL "Path to tip-iri libaray includes" )
 endif()
 
