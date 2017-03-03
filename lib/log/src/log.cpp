@@ -10,6 +10,7 @@
 #include <chrono>
 #include <algorithm>
 #include <ostream>
+#include <fstream>
 #include <istream>
 #include <iterator>
 #include <unistd.h>
@@ -32,7 +33,7 @@ const std::string::size_type PROC_NAME_MAX_LEN = 12;
 const std::string UNKNOW_CATEGORY = "<UNKNOWN>";
 const std::string::size_type CATEGORY_MAX_LEN = UNKNOW_CATEGORY.size();
 
-typedef boost::posix_time::ptime timestamp_type;
+using timestamp_type = boost::posix_time::ptime;
 
 namespace {
 
@@ -40,7 +41,7 @@ namespace {
 	timestamp_type
 	timestamp()
 	{
-		return boost::posix_time::microsec_clock::universal_time();
+        return boost::posix_time::microsec_clock::universal_time();
 	}
 
 	std::string const&
@@ -71,12 +72,14 @@ namespace {
 	{
 		proc_name(argv[0]);
 	}
+#ifdef GCC_5_3_1_FAIL
 #ifdef __linux__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 	__attribute__((section(".init_array"))) void (* p_lib_main)(int,char*[],char*[]) = &lib_main;
 #pragma GCC diagnostic pop
 #endif /* __linux__ */
+#endif
 } // namespace
 
 namespace {
@@ -148,7 +151,7 @@ operator >> (std::istream& in, logger::event_severity& es)
 }
 
 struct event_data {
-	typedef boost::asio::streambuf buffer_type;
+    using buffer_type = boost::asio::streambuf;
 	size_t						thread_no_;
 	timestamp_type				timestamp_;
 	logger::event_severity		severity_;
@@ -163,17 +166,22 @@ struct event_data {
 };
 
 struct log_writer {
-	typedef std::shared_ptr<event_data> event_ptr;
-	typedef std::queue<event_ptr> event_queue;
+    using event_ptr     = ::std::shared_ptr<event_data>;
+    using event_queue   = ::std::queue<event_ptr>;
+    using mutex_type    = ::std::mutex;
+    using lock_guard    = ::std::lock_guard<mutex_type>;
+    using unique_lock   = ::std::unique_lock<mutex_type>;
 
-	std::ostream& out_;
+    ::std::shared_ptr<::std::ofstream>  redirect_file_;
+    ::std::ostream&                     out_;
 	pid_t pid_;
 
 	event_queue events_;
 	std::condition_variable cond_;
-	std::mutex mtx_;
+    mutex_type                          mtx_;
 
 	bool finished_;
+
 
 	log_writer(std::ostream& s)
 			: out_(s), pid_(::getpid()), finished_(false)
@@ -182,6 +190,23 @@ struct log_writer {
 		date_facet* f = new date_facet(date_format.c_str());
 		out_.imbue(std::locale(std::locale::classic(), f));
 	}
+
+    log_writer(::std::string const& file_name)
+        : redirect_file_{
+            ::std::make_shared< ::std::ofstream >(file_name,
+                    std::ofstream::out | std::ofstream::app) },
+          out_{*redirect_file_}, pid_{::getpid()}, finished_{false}
+    {
+        using boost::gregorian::date_facet;
+        date_facet* f = new date_facet(date_format.c_str());
+        out_.imbue(std::locale(std::locale::classic(), f));
+    }
+
+    ~log_writer()
+    {
+        if (redirect_file_)
+            redirect_file_->flush();
+    }
 
 	void
 	change_date_format()
@@ -195,66 +220,68 @@ struct log_writer {
 	run()
 	{
 		while (!finished_) {
-			try {
-				{
-					std::unique_lock<std::mutex> lock(mtx_);
-					while (events_.empty() && !finished_) cond_.wait(lock);
-				}
-				bool empty_queue = false;
-				{
-					std::unique_lock<std::mutex> lock(mtx_);
-					empty_queue = events_.empty();
-				}
-				while (!empty_queue) {
-					event_ptr e = events_.front();
-					events_.pop();
-					event_data& evt = *e;
-					std::ostream::sentry s(out_);
-					if (s) {
-						bool use_colors = logger_use_colors;
-						if (use_colors)
-							out_ << severity_colors[ evt.severity_ ];
-						// process name
-						out_ << std::setw(PROC_NAME_MAX_LEN + 1) << std::left << proc_name() << ' ';
-						// pid
-						out_ << std::setw(6) << std::left << pid_ << ' ';
-						// thread no
-						out_ << std::setw(4) << std::left << evt.thread_no_ << ' ';
-						// category
-						out_ << std::setw(CATEGORY_MAX_LEN + 1) << evt.category_;
-						// timestamp
-						out_ << evt.timestamp_.date() << ' ' << evt.timestamp_.time_of_day() << ' ';
-						out_ << std::setw(8) << std::left << evt.severity_;
-
-						std::istreambuf_iterator<char> eob;
-						std::istreambuf_iterator<char> bi(&evt.buffer_);
-						std::ostream_iterator<char> out(out_);
-						std::copy(bi, eob, out);
-						if (use_colors)
-							out_ << util::CLEAR;
-						*out++ = '\n';
-						if (flush_stream_)
-							out_.flush();
-					}
-					{
-						std::unique_lock<std::mutex> lock(mtx_);
-						empty_queue = events_.empty();
-					}
-				}
-			} catch (::std::exception const& e) {
-				auto time = boost::posix_time::microsec_clock::universal_time();
-				out_ << time.time_of_day() << " Exception in logging thread: " << e.what() << ::std::cerr;
-			} catch (...) {
-				auto time = boost::posix_time::microsec_clock::universal_time();
-				out_ << time.time_of_day() << " Unknown exception in logging thread"<< ::std::cerr;
+            try {
+                event_queue events;
+			{
+                    unique_lock lock{mtx_};
+				while (events_.empty() && !finished_) cond_.wait(lock);
+                    events.swap(events_);
 			}
+
+                while (!events.empty()) {
+                    while (!events.empty()) {
+                        event_ptr e;
+                        e = events.front();
+                        events.pop();
+                        if (!e) break;
+
+				event_data& evt = *e;
+				std::ostream::sentry s(out_);
+				if (s) {
+					bool use_colors = logger_use_colors;
+					if (use_colors)
+						out_ << severity_colors[ evt.severity_ ];
+					// process name
+					out_ << std::setw(PROC_NAME_MAX_LEN + 1) << std::left << proc_name() << ' ';
+					// pid
+					out_ << std::setw(6) << std::left << pid_ << ' ';
+					// thread no
+					out_ << std::setw(4) << std::left << evt.thread_no_ << ' ';
+					// category
+					out_ << std::setw(CATEGORY_MAX_LEN + 1) << evt.category_;
+					// timestamp
+					out_ << evt.timestamp_.date() << ' ' << evt.timestamp_.time_of_day() << ' ';
+					out_ << std::setw(8) << std::left << evt.severity_;
+
+					std::istreambuf_iterator<char> eob;
+					std::istreambuf_iterator<char> bi(&evt.buffer_);
+					std::ostream_iterator<char> out(out_);
+					std::copy(bi, eob, out);
+					if (use_colors)
+						out_ << util::CLEAR;
+					*out++ = '\n';
+					if (flush_stream_)
+						out_.flush();
+				}
+				}
+                    unique_lock lock{mtx_};
+                    events.swap(events_);
+			}
+                out_.flush();
+            } catch (::std::exception const& e) {
+                auto time = boost::posix_time::microsec_clock::universal_time();
+                out_ << time.time_of_day() << " Exception in logging thread: " << e.what() << ::std::endl;
+            } catch (...) {
+                auto time = boost::posix_time::microsec_clock::universal_time();
+                out_ << time.time_of_day() << " Unknown exception in logging thread"<< ::std::endl;
+            }
 		}
 	}
 
 	void
 	push(event_ptr e)
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
+        unique_lock lock{mtx_};
 		events_.push(e);
 		cond_.notify_all();
 	}
@@ -262,7 +289,7 @@ struct log_writer {
 	void
 	finish()
 	{
-		std::unique_lock<std::mutex> lock(mtx_);
+        unique_lock lock{mtx_};
 		finished_ = true;
 		cond_.notify_all();
 	}
@@ -272,9 +299,9 @@ struct logger::Impl {
 	struct thread_number {
 		size_t no;
 	};
-	typedef boost::thread_specific_ptr<event_data> thread_event_ptr;
-	typedef boost::thread_specific_ptr<thread_number> thread_number_ptr;
-	typedef std::shared_ptr<event_data> event_ptr;
+    using thread_event_ptr = boost::thread_specific_ptr<event_data>;
+    using thread_number_ptr = boost::thread_specific_ptr<thread_number>;
+    using event_ptr = std::shared_ptr<event_data>;
 
 	log_writer writer_;
 	std::thread writer_thread_;
@@ -291,6 +318,14 @@ struct logger::Impl {
 			writer_.run();
 		});
 	}
+
+    Impl(::std::string const& file_name)
+        : writer_(file_name), writer_thread_(), finished_(false)
+    {
+        writer_thread_ = std::thread([&]{
+            writer_.run();
+        });
+    }
 
 	~Impl()
 	{
@@ -349,11 +384,14 @@ struct logger::Impl {
 	void
 	flush()
 	{
-		if (!finished_ && event_.get() && size() > 0) {
-			event_data* e = event_.release();
-			writer_.push(event_ptr(e));
+        if (!finished_ && event_.get()) {
+            event_ptr e(event_.release());
+            if (logger::min_severity() <= e->severity_
+                && logger::OFF < e->severity_) {
+                writer_.push(e);
 		}
 	}
+    }
 
 	void
 	change_date_format()
@@ -380,6 +418,13 @@ logger::set_stream(std::ostream& s)
 {
 	logger& l = instance();
 	l.pimpl_.reset(new Impl(s));
+}
+
+void
+logger::set_target_file(::std::string const& file_name)
+{
+    logger& l = instance();
+    l.pimpl_.reset(new Impl(file_name));
 }
 
 void
@@ -477,10 +522,7 @@ namespace util {
 log::logger&
 operator << (log::logger& out, ANSI_COLOR col)
 {
-	using log::logger;
-	logger::event_severity s = out.severity();
-	if (logger::min_severity() <= s && logger::OFF < s
-			&& log::logger::use_colors()) {
+    if(log::logger::use_colors()) {
 		std::ostream os(&out.buffer());
 		os << col;
 	}
