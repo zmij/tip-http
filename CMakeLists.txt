@@ -54,7 +54,14 @@ endif()
 
 get_directory_property(has_parent PARENT_DIRECTORY)
 if (has_parent)
-    set(TIP_${LIB_NAME}_LIB ${PROJECT_PREFIX}-${lib_name} CACHE INTERNAL "Name of tip-iri library target")
-    set(TIP_${LIB_NAME}_INCLUDE_DIRS ${${LIB_NAME}_INCLUDES} CACHE INTERNAL "Path to tip-iri libaray includes" )
+    set(TIP_IRI_LIB ${PROJECT_PREFIX}-iri PARENT_SCOPE)
+    if(NOT BUILD_TESTS)
+        set(TIP_IRI_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+    else()
+        set(TIP_IRI_INCLUDE_DIRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/test
+        PARENT_SCOPE)
+    endif()
 endif()
 
