@@ -1,7 +1,7 @@
-#	CMakeLists.txt for tip-iri library
-#	
-#	@author zmij
-#	@date Nov 30, 2015
+#    CMakeLists.txt for tip-iri library
+#
+#    @author zmij
+#    @date Nov 30, 2015
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -54,14 +54,14 @@ endif()
 
 get_directory_property(has_parent PARENT_DIRECTORY)
 if (has_parent)
-    set(TIP_IRI_LIB ${PROJECT_PREFIX}-iri PARENT_SCOPE)
+    set(TIP_IRI_LIB ${PROJECT_PREFIX}-iri  CACHE INTERNAL "Tip iri library target name")
     if(NOT BUILD_TESTS)
-        set(TIP_IRI_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
+        set(TIP_IRI_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE INTERNAL "Tip iri include directories")
     else()
         set(TIP_IRI_INCLUDE_DIRS
             ${CMAKE_CURRENT_SOURCE_DIR}/include
             ${CMAKE_CURRENT_SOURCE_DIR}/test
-        PARENT_SCOPE)
+        CACHE INTERNAL "Tip iri include directories")
     endif()
 endif()
 
