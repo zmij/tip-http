@@ -58,7 +58,6 @@ configure_file(config.in.hpp config.hpp)
 # HTTP Common test
 set(
     test_http_common_SRCS
-    grammar_experiments.cpp
     generate_tests.cpp
     base64_test.cpp
     datetime_parse_test.cpp
