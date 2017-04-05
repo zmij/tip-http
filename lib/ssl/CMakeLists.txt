@@ -1,6 +1,6 @@
 #    CMakeLists.txt for tip-ssl-context library
-#	
-#	@author zmij
+#
+#    @author zmij
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -38,7 +38,8 @@ find_package (Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 include_directories(
-    ${Boost_INCLUDE_DIRS} 
+    ${Boost_INCLUDE_DIRS}
+    ${OpenSSL_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
