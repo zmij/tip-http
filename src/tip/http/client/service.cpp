@@ -293,12 +293,6 @@ service::shutdown_service()
     pimpl_->shutdown();
 }
 
-response_ptr
-service::get(::std::string const& url)
-{
-    auto future = get_async(url, true);
-    return future.get();
-}
 
 void
 service::get_async(std::string const& url, response_callback cb, error_callback eb, bool run_sync)
@@ -306,39 +300,12 @@ service::get_async(std::string const& url, response_callback cb, error_callback 
     pimpl_->get(url, cb, eb, run_sync);
 }
 
-response_ptr
-service::post(::std::string const& url, body_type const& body)
-{
-    auto future = post_async(url, body, true);
-    return future.get();
-}
 
 void
 service::post(::std::string const& url, body_type const& body,
         response_callback cb, error_callback eb, bool run_sync)
 {
     pimpl_->post(url, body, cb, eb, run_sync);
-}
-
-response_ptr
-service::post(::std::string const& url, body_type&& body)
-{
-    auto future = post_async(url, body, true);
-    return future.get();
-}
-
-void
-service::post(std::string const& url, body_type&& body,
-        response_callback cb, error_callback eb, bool run_sync)
-{
-    pimpl_->post(url, std::move(body), cb, eb, run_sync);
-}
-
-response_ptr
-service::post(::std::string const& url, ::std::string const& body)
-{
-    auto future = post_async(url, body, true);
-    return future.get();
 }
 
 void

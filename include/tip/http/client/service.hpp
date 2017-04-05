@@ -43,8 +43,13 @@ public:
     void
     set_max_concurrent_sessions(::std::size_t);
 
+    template < template < typename > class _Promise = ::std::promise >
     response_ptr
-    get(::std::string const& url);
+    get(::std::string const& url)
+    {
+        auto future = get_async<_Promise>(url, false);
+        return future.get();
+    }
 
     template < template < typename > class _Promise = ::std::promise >
     auto
@@ -68,63 +73,27 @@ public:
     get_async(::std::string const& url, response_callback,
             error_callback = nullptr, bool run_sync = false);
 
-    response_ptr
-    post(::std::string const& url, body_type const& body);
-    template < template < typename > class _Promise = ::std::promise >
-    auto
-    post_async(::std::string const& url, body_type const& body, bool run_sync)
-        -> decltype( ::std::declval< _Promise< response_ptr > >().get_future() )
-    {
-        auto promise = ::std::make_shared< _Promise< response_ptr > >();
-        post(url, body,
-        [promise](response_ptr resp)
-        {
-            promise->set_value(resp);
-        },
-        [promise](::std::exception_ptr ex)
-        {
-            promise->set_exception(::std::move(ex));
-        }, run_sync);
-
-        return promise->get_future();
-    }
     void
     post(::std::string const& url, body_type const& body, response_callback,
             error_callback = nullptr, bool run_sync = false);
 
-    response_ptr
-    post(::std::string const& url, body_type&& body);
-    template < template < typename > class _Promise = ::std::promise >
-    auto
-    post_async(::std::string const& url, body_type&& body, bool run_sync)
-        -> decltype( ::std::declval< _Promise< response_ptr > >().get_future() )
-    {
-        auto promise = ::std::make_shared< _Promise< response_ptr > >();
-        post(url, body,
-        [promise](response_ptr resp)
-        {
-            promise->set_value(resp);
-        },
-        [promise](::std::exception_ptr ex)
-        {
-            promise->set_exception(::std::move(ex));
-        }, run_sync);
-
-        return promise->get_future();
-    }
     void
     post(::std::string const& url, body_type&& body, response_callback,
             error_callback = nullptr, bool run_sync = false);
 
-    response_ptr
-    post(::std::string const& url, ::std::string const& body);
-    template < template < typename > class _Promise = ::std::promise >
+
+    void
+    post(::std::string const& url, ::std::string const& body, response_callback,
+            error_callback = nullptr, bool run_sync = false);
+
+
+    template < typename Body, template < typename > class _Promise = ::std::promise >
     auto
-    post_async(::std::string const& url, ::std::string const& body, bool run_sync)
+    post_async(::std::string const& url, Body&& body, bool run_sync)
         -> decltype( ::std::declval< _Promise< response_ptr > >().get_future() )
     {
         auto promise = ::std::make_shared< _Promise< response_ptr > >();
-        post(url, body,
+        post(url, ::std::forward<Body>(body),
         [promise](response_ptr resp)
         {
             promise->set_value(resp);
@@ -136,9 +105,13 @@ public:
 
         return promise->get_future();
     }
-    void
-    post(::std::string const& url, ::std::string const& body, response_callback,
-            error_callback = nullptr, bool run_sync = false);
+    template < typename Body, template < typename > class _Promise = ::std::promise >
+    response_ptr
+    post(::std::string const& url, Body&& body)
+    {
+        auto future = post_async<Body, _Promise>(url, ::std::forward<Body>(body), false);
+        return future.get();
+    }
 private:
     virtual void
     shutdown_service();
