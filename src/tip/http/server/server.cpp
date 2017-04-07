@@ -17,27 +17,13 @@
 
 #include <string.h>
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 namespace tip {
 namespace http {
 namespace server {
 
-using tip::log::logger;
-
-namespace {
-/** Local logging facility */
-using namespace tip::log;
-
-const std::string LOG_CATEGORY = "HTTPSRV";
-logger::event_severity DEFAULT_SEVERITY = logger::TRACE;
-local
-local_log(logger::event_severity s = DEFAULT_SEVERITY)
-{
-    return local(LOG_CATEGORY, s);
-}
-
-}  // namespace
+LOCAL_LOGGING_FACILITY(HTTPSRV, TRACE);
 
 server::server(io_service_ptr io_svc,
         std::string const& address, std::string const& port,

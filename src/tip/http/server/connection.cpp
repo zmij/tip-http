@@ -16,7 +16,7 @@
 
 #include <tip/http/version.hpp>
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/spirit/include/support_istream_iterator.hpp>

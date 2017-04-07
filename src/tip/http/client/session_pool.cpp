@@ -6,7 +6,7 @@
  */
 
 #include <tip/http/client/session_pool.hpp>
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 namespace tip {
 namespace http {

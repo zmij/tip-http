@@ -14,22 +14,22 @@ namespace server {
 void
 error::log_error(std::string const& message) const
 {
-	tip::log::local local(category_, severity_);
-	local << message << what();
+    ::psst::log::local local(category_, severity_);
+    local << message << what();
 }
 
 std::string const&
 error::name() const
 {
-	static std::string NAME_ = "error";
-	return NAME_;
+    static std::string NAME_ = "error";
+    return NAME_;
 }
 
 std::string const&
 client_error::name() const
 {
-	static std::string NAME_ = "client_error";
-	return NAME_;
+    static std::string NAME_ = "client_error";
+    return NAME_;
 }
 
 } /* namespace server */

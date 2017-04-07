@@ -12,7 +12,7 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/device/array.hpp>
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 namespace tip {
 namespace http {

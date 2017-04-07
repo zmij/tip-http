@@ -12,7 +12,7 @@
 #include <tip/http/server/detail/context_registry.hpp>
 #include <tip/http/server/locale_manager.hpp>
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 #include <boost/iostreams/stream_buffer.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>

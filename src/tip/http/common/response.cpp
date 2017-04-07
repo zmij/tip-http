@@ -18,7 +18,7 @@
 #include <boost/spirit/include/support_multi_pass.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 namespace tip {
 namespace http {

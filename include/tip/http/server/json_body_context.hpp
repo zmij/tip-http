@@ -308,7 +308,7 @@ public:
     json_error(std::string const& cat, std::string const& w,
             response_status s
                 = response_status::internal_server_error,
-                log::logger::event_severity sv = log::logger::ERROR)
+                event_severity sv = ::psst::log::logger::ERROR)
             : client_error(cat, w, s, sv) {}
     virtual ~json_error() {}
 

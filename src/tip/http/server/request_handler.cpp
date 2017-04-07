@@ -15,7 +15,7 @@
 
 #include <tip/http/common/request.hpp>
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 namespace tip {
 namespace http {

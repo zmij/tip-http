@@ -5,7 +5,7 @@
  *      Author: zmij
  */
 
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 #include <gtest/gtest.h>
 

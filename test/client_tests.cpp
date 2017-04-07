@@ -11,7 +11,7 @@
 #include <tip/http/client/session_pool.hpp>
 #include <tip/http/common/response.hpp>
 #include <tip/ssl_context_service.hpp>
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 namespace tip {
 namespace http {

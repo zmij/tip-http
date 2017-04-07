@@ -6,7 +6,7 @@
  */
 
 #include <tip/http/client/service.hpp>
-#include <tip/log.hpp>
+#include <pushkin/log.hpp>
 
 #include <set>
 #include <map>
