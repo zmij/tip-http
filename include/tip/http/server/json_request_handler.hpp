@@ -146,6 +146,7 @@ use_context(json_reply& r)
 template < typename T >
 struct json_request_handler {
     using handler_type = T;
+    using base_type = json_request_handler< T >;
 
     void
     operator()(reply r)
