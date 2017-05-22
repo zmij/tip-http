@@ -120,6 +120,20 @@ public:
     template < typename Context >
     friend Context&
     use_context(json_reply& r);
+
+    void
+    raw_response(::std::string const& body,
+            response_status status = response_status::ok) const
+    {
+        if (!sent_->test_and_set()) {
+            r_.add_header({ ContentType, "application/json; charset=utf8" });
+            r_.response_body().clear();
+            ::std::copy(body.begin(), body.end(), ::std::back_inserter(r_.response_body()));
+            r_.done(status);
+        } else {
+            log_already_sent();
+        }
+    }
 private:
     void
     log_already_sent() const;
