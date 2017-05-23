@@ -13,6 +13,9 @@
 #include <tip/http/common/header.hpp>
 #include <tip/http/common/cookie.hpp>
 #include <tip/http/common/response_status.hpp>
+
+#include <tip/http/server/detail/query_param_parser.hpp>
+
 #include <tip/iri.hpp>
 
 #include <boost/noncopyable.hpp>
@@ -64,8 +67,31 @@ public:
 
     tip::iri::path const&
     path() const;
+
+    //@{
+    /** @name HTTP Query */
     query_type const&
     query() const;
+
+    bool
+    has_query_parameter(::std::string const& name) const;
+
+    template <typename T>
+    bool
+    get_query_parameter(::std::string const& name, T& val) const
+    {
+        detail::query_param_extractor<T> extract;
+        return extract(query(), name, val);
+    }
+
+    template <typename T, typename ParseFunc>
+    bool
+    get_query_parameter(::std::string const& name, T& val, ParseFunc parse_func) const
+    {
+        detail::query_param_parser<T> extract{parse_func};
+        return extract(query(), name, val);
+    }
+    //@}
 
     headers const&
     request_headers() const;

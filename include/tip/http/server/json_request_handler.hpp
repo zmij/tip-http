@@ -33,9 +33,31 @@ public:
     path() const
     { return r_.path(); }
 
+    //@{
+    /** @name Query */
     reply::query_type const&
     query() const
     { return r_.query(); }
+
+    bool
+    has_query_parameter(::std::string const& name) const
+    {
+        return r_.has_query_parameter(name);
+    }
+
+    template <typename T>
+    bool
+    get_query_parameter(::std::string const& name, T& val) const
+    {
+        return r_.get_query_parameter(name, val);
+    }
+    template <typename T, typename ParseFunc>
+    bool
+    get_query_parameter(::std::string const& name, T& val, ParseFunc parse_func) const
+    {
+        return r_.get_query_parameter(name, val, parse_func);
+    }
+    //@}
 
     headers const&
     request_headers() const

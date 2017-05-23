@@ -180,6 +180,13 @@ reply::query() const
     return pimpl_->req_->query;
 }
 
+bool
+reply::has_query_parameter(::std::string const& name) const
+{
+    auto f = pimpl_->req_->query.equal_range(name);
+    return f.first != f.second;
+}
+
 headers const&
 reply::request_headers() const
 {
