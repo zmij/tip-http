@@ -10,9 +10,12 @@
 
 #include <stdexcept>
 #include <pushkin/log.hpp>
+#include <pushkin/l10n/message.hpp>
 #include <tip/http/common/response_status.hpp>
 
 #include <boost/locale.hpp>
+#include <boost/variant.hpp>
+#include <boost/optional.hpp>
 
 namespace tip {
 namespace http {
@@ -20,19 +23,32 @@ namespace server {
 
 class error: public std::runtime_error {
 public:
-    using localized_message         = ::boost::locale::message;
-    using event_severity            = ::psst::log::logger::event_severity;
+    using localized_message             = ::boost::locale::message;
+    using format                        = ::psst::l10n::format;
+    using formatted_message_ptr         = ::psst::l10n::format_shared_ptr;
+    using localized_contents            = ::boost::variant<localized_message, formatted_message_ptr>;
+    using optional_localized_message    = ::boost::optional<localized_contents>;
+    using event_severity                = ::psst::log::logger::event_severity;
 public:
     error(std::string const& cat, std::string const& w,
             response_status s
                 = response_status::internal_server_error,
-            event_severity sv = ::psst::log::logger::ERROR) :
-        runtime_error(w), category_(cat), status_(s), severity_(sv) {};
+            event_severity sv = ::psst::log::logger::ERROR)
+        : runtime_error(w), category_(cat), status_(s), severity_(sv) {};
     error(std::string const& cat, localized_message const& w,
             response_status s
                 = response_status::internal_server_error,
-                event_severity sv = ::psst::log::logger::ERROR) :
-        runtime_error(w.str()), category_(cat), status_(s), severity_(sv), message_l10n_(w), is_localized_(true) {};
+                event_severity sv = ::psst::log::logger::ERROR)
+        : runtime_error(w.str()), category_(cat), status_(s),
+          severity_(sv), message_l10n_(w) {};
+    error(::std::string const& cat, format&& w,
+            response_status s
+                            = response_status::internal_server_error,
+                            event_severity sv = ::psst::log::logger::ERROR)
+        : runtime_error(w.str()), category_(cat), status_(s),
+          severity_(sv),
+          message_l10n_(::std::make_shared<format>(::std::move(w))){};
+
     virtual ~error() {}
 
     virtual std::string const&
@@ -54,13 +70,13 @@ public:
     status() const
     { return status_; }
 
-    localized_message const&
+    localized_contents const&
     message_l10n() const
-    { return message_l10n_; }
+    { return *message_l10n_; }
 
     bool
     is_localized() const
-    { return is_localized_; }
+    { return message_l10n_.is_initialized(); }
 
     virtual void
     log_error(std::string const& message = "") const;
@@ -68,8 +84,8 @@ private:
     std::string                     category_;
     response_status                 status_;
     event_severity                  severity_;
-    localized_message               message_l10n_{};
-    bool                            is_localized_{false};
+
+    optional_localized_message      message_l10n_;
 };
 
 class client_error : public error {
@@ -79,11 +95,16 @@ public:
                 = response_status::bad_request,
                 event_severity sv = ::psst::log::logger::ERROR)
         : error(cat, w, s, sv) {};
-    client_error(std::string const& cat, error::localized_message const& w,
+    client_error(std::string const& cat, localized_message const& w,
             response_status s
                 = response_status::bad_request,
                 event_severity sv = ::psst::log::logger::ERROR)
         : error(cat, w, s, sv) {};
+    client_error(std::string const& cat, format&& w,
+            response_status s
+                = response_status::bad_request,
+                event_severity sv = ::psst::log::logger::ERROR)
+        : error(cat, ::std::move(w), s, sv) {};
     virtual ~client_error() {};
 
     virtual std::string const&

@@ -12,8 +12,12 @@
 #include <tip/http/server/request_handler.hpp>
 #include <tip/http/server/reply_context.hpp>
 #include <tip/http/server/error.hpp>
+
 #include <cereal/archives/json.hpp>
 #include <cereal/types/locale_message.hpp>
+#include <cereal/types/variant.hpp>
+
+#include <pushkin/l10n/message_cereal.hpp>
 
 #include <memory>
 

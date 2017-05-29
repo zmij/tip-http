@@ -77,6 +77,8 @@ endif()
 
 set(CEREAL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/cereal/include)
 
+# FIXME Locate pushkin/l10n library
+
 include_directories(
     ${Boost_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -86,6 +88,7 @@ include_directories(
     ${TIP_LOG_INCLUDE_DIRS}
     ${TIP_SSL_INCLUDE_DIRS}
     ${TIP_UTIL_INCLUDE_DIRS}
+    ${PUSHKIN_L10N_INCLUDE_DIRS}
     ${CEREAL_INCLUDE_DIR}
 )
 

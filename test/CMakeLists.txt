@@ -116,6 +116,7 @@ set(
     pathmatcher_test.cpp
     locale_name_parse_test.cpp
     locale_manager_test.cpp
+    error_serialize.cpp
 )
 
 add_executable(test-http-server ${server_test_SRCS})
@@ -123,6 +124,7 @@ target_link_libraries(test-http-server
     ${GTEST_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${HTTP_SERVER_LIB}
+    ${PUSHKIN_L10N_LIBRARIES}
 )
 
 add_test(
