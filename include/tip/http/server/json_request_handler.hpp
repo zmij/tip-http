@@ -126,6 +126,21 @@ public:
     void
     operator()(T&& body, response_status status = response_status::ok) const
     { done(::std::forward<T>(body), status); }
+
+    template < typename ... T >
+    void
+    operator()(response_status status, T&& ... items) const
+    {
+        if (!sent_->test_and_set()) {
+            r_.add_header({ ContentType, "application/json; charset=utf8" });
+            r_.response_body().clear();
+            auto& json = use_context<json_body_context>(r_);
+            serialize_response(json, ::std::forward<T>(items) ...);
+            r_.done(status);
+        } else {
+            log_already_sent();
+        }
+    }
     void
     error(http::server::error const& e) const
     {
@@ -159,6 +174,22 @@ public:
 private:
     void
     log_already_sent() const;
+
+    template < typename T >
+    void
+    serialize_response(json_body_context& json, T&& body ) const
+    {
+        json << ::std::forward<T>(body);
+    }
+
+    template < typename T, typename ... U >
+    void
+    serialize_response(json_body_context& json, T&& head, U&& ... tail) const
+    {
+        json << ::std::forward<T>(head);
+        serialize_response(json, ::std::forward<U>(tail) ...);
+    }
+
     using shared_flag = ::std::shared_ptr<::std::atomic_flag>;
 
     reply mutable   r_;
@@ -181,8 +212,10 @@ use_context(json_reply& r)
 
 template < typename T >
 struct json_request_handler {
-    using handler_type = T;
-    using base_type = json_request_handler< T >;
+    using handler_type  = T;
+    using base_type     = json_request_handler< T >;
+    // Pull the json_reply name into the class's name scope
+    using json_reply    = http::server::json_reply;
 
     void
     operator()(reply r)
@@ -205,10 +238,10 @@ private:
 template < typename T, typename BodyType >
 struct json_transform_handler :
         json_request_handler< json_transform_handler<T, BodyType> >{
-    using base_type = json_request_handler< json_transform_handler<T, BodyType> >;
-    using handler_type = T;
-    using request_body_type     = BodyType;
-    using request_pointer       = ::std::shared_ptr<BodyType>;
+    using base_type         = json_request_handler< json_transform_handler<T, BodyType> >;
+    using handler_type      = T;
+    using request_body_type = BodyType;
+    using request_pointer   = ::std::shared_ptr<BodyType>;
 
     using base_type::operator();
     void
