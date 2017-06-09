@@ -254,6 +254,13 @@ namespace cereal
       //! Saves a const char * to the current node
       void saveValue(char const * s)        { itsWriter.String(s);                                                       }
 
+      //! Appends raw string (no escapes and other) to the stream
+      void saveRaw(char const* s)
+      {
+          for (char const* c = s; *c != 0; ++c) {
+              itsWriteStream.Put(*c);
+          }
+      }
     private:
       // Some compilers/OS have difficulty disambiguating the above for various flavors of longs, so we provide
       // special overloads to handle these cases.
