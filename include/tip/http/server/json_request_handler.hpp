@@ -171,6 +171,12 @@ public:
             log_already_sent();
         }
     }
+
+    reply::body_type const&
+    request_body() const
+    {
+        return r_.request_body();
+    }
 private:
     void
     log_already_sent() const;
