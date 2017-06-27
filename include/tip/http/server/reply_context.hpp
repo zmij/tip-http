@@ -26,7 +26,7 @@ add_context(reply& r, Context* ctx)
 
 template < typename Context >
 bool
-has_context(reply& r)
+has_context(reply const& r)
 {
 	static_assert(std::is_base_of< reply::context, Context >::value,
 			"Context must be derived from reply::context");
@@ -43,6 +43,17 @@ use_context(reply& r)
 	(void)static_cast<reply::id*>(&Context::id);
 	return r.context_registry().template use_context<Context>();
 }
+
+template < typename Context >
+Context const&
+use_context(reply const& r)
+{
+    static_assert(std::is_base_of< reply::context, Context >::value,
+            "Context must be derived from reply::context");
+    (void)static_cast<reply::id*>(&Context::id);
+    return r.context_registry().template use_context<Context>();
+}
+
 
 } /* namespace server */
 } /* namespace http */

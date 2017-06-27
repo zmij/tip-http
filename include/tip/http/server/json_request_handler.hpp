@@ -9,6 +9,8 @@
 #define HTTP_SERVER_JSON_REQUEST_HANDLER_HPP_
 
 #include <tip/http/server/json_body_context.hpp>
+#include <tip/http/server/prerequisite_handler.hpp>
+
 #include <atomic>
 #include <type_traits>
 
@@ -153,10 +155,13 @@ public:
 
     template < typename Context >
     friend bool
-    has_context(json_reply& r);
+    has_context(json_reply const& r);
     template < typename Context >
     friend Context&
     use_context(json_reply& r);
+    template < typename Context >
+    friend Context const&
+    use_context(json_reply const& r);
 
     void
     raw_response(::std::string const& body,
@@ -204,7 +209,7 @@ private:
 
 template < typename Context >
 bool
-has_context(json_reply& r)
+has_context(json_reply const& r)
 {
     return has_context<Context>(r.r_);
 }
@@ -215,6 +220,14 @@ use_context(json_reply& r)
 {
     return use_context<Context>(r.r_);
 }
+
+template < typename Context >
+Context const&
+use_context(json_reply const& r)
+{
+    return use_context<Context>(r.r_);
+}
+
 
 template < typename T >
 struct json_request_handler {
@@ -277,6 +290,64 @@ private:
     {
         return static_cast<handler_type const&>(*this);
     }
+};
+
+template < typename T, typename ... Prerequisite >
+class json_prerequisite_handler : public json_request_handler< T > {
+    using prerequisites_type = prerequisites<Prerequisite...>;
+    using json_handler_type = json_request_handler<T>;
+public:
+    using this_type         = json_prerequisite_handler<T, Prerequisite...>;
+    using base_type         = this_type;
+
+    void
+    operator()(reply r)
+    {
+        try {
+            if (check_prerequisites(r)) {
+                json_handler_type::operator ()(r);
+            }
+        } catch (...) {
+            r.server_error();
+        }
+    }
+
+    bool
+    check_prerequisites( reply const& r ) const
+    {
+        return prerequisites_(r);
+    }
+private:
+    prerequisites_type  prerequisites_;
+};
+
+template < typename T, typename BodyType, typename ... Prerequisite >
+class json_transform_prerequisite_handler : public json_transform_handler<T, BodyType> {
+    using prerequisites_type = prerequisites<Prerequisite...>;
+    using json_handler_type = json_transform_handler<T, BodyType>;
+public:
+    using this_type         = json_transform_prerequisite_handler<T, BodyType, Prerequisite...>;
+    using base_type         = this_type;
+
+    void
+    operator()(reply r)
+    {
+        try {
+            if (check_prerequisites(r)) {
+                json_handler_type::operator ()(r);
+            }
+        } catch (...) {
+            r.server_error();
+        }
+    }
+
+    bool
+    check_prerequisites( reply const& r ) const
+    {
+        return prerequisites_(r);
+    }
+private:
+    prerequisites_type  prerequisites_;
 };
 
 }  /* namespace server */

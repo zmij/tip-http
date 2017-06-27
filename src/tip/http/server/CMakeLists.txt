@@ -18,6 +18,7 @@ set(
     locale_name.cpp
     locale_manager.cpp
     language_context.cpp
+    basic_auth_context.cpp
     json_body_context.cpp
     remote_address.cpp
 )

@@ -9,9 +9,11 @@
 #define TIP_HTTP_COMMON_GRAMMAR_HEADER_FIELDS_PARSE_HPP_
 
 #include <boost/spirit/include/qi.hpp>
-#include <tip/http/common/header.hpp>
 #include <boost/spirit/include/phoenix.hpp>
 #include <boost/fusion/include/std_pair.hpp>
+
+#include <tip/http/common/header.hpp>
+#include <tip/http/common/grammar/base64_parse.hpp>
 
 namespace tip {
 namespace http {
@@ -54,6 +56,17 @@ struct accept_languages_grammar :
 	boost::spirit::qi::rule< InputIterator, accept_language() > accept_repeat;
 };
 
+template < typename InputIterator >
+struct basic_auth_grammar :
+        boost::spirit::qi::grammar< InputIterator, ::std::string() > {
+    basic_auth_grammar() : basic_auth_grammar::base_type(root)
+    {
+        namespace qi = boost::spirit::qi;
+        root = "Basic " >> base64_str;
+    }
+    boost::spirit::qi::rule< InputIterator, ::std::string() >   root;
+    base64_grammar< InputIterator >                             base64_str;
+};
 
 }  // namespace parse
 }  // namespace grammar

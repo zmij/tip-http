@@ -309,7 +309,7 @@ reply::on_finish(finished_func f)
 }
 
 detail::context_registry&
-reply::context_registry()
+reply::context_registry() const
 {
     return pimpl_->registry_;
 }

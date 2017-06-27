@@ -99,7 +99,7 @@ check_nth( prerequisite_builder< IndexTuple, T ... > const& builder, reply const
 }  // namespace detail
 
 template < typename ... Prerequisite >
-class prereqiusites :
+class prerequisites :
 		public detail::prerequisite_builder<
 			typename util::index_builder< sizeof ... (Prerequisite) >::type,
 			Prerequisite ...  > {
@@ -110,7 +110,7 @@ public:
 };
 
 template <>
-class prereqiusites<> {
+class prerequisites<> {
 public:
 	inline bool
 	operator()(reply const&) const
@@ -122,7 +122,7 @@ public:
 template < typename ... Prerequisite >
 class prerequisite_handler : public request_handler {
 private:
-	using prerequisites_type = prereqiusites< Prerequisite ... >;
+	using prerequisites_type = prerequisites< Prerequisite ... >;
 public:
 	prerequisite_handler() {}
 	virtual ~prerequisite_handler() {}

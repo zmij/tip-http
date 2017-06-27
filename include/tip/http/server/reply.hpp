@@ -167,14 +167,18 @@ private:
 
     template < typename Context >
     friend bool
-    has_context(reply&);
+    has_context(reply const&);
 
     template < typename Context >
     friend Context&
     use_context(reply&);
 
+    template < typename Context >
+    friend Context const&
+    use_context(reply const&);
+
     detail::context_registry&
-    context_registry();
+    context_registry() const;
 private:
     struct impl;
     typedef std::shared_ptr<impl> pimpl;

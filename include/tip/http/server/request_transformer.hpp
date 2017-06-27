@@ -30,7 +30,7 @@ public:
     using transformer_type = Transformer;
     using request_type = typename transformer_type::request_type;
     using request_pointer = typename transformer_type::pointer;
-    using prerequisites_type = prereqiusites< Prerequisite ... >;
+    using prerequisites_type = prerequisites< Prerequisite ... >;
 public:
     request_transformer() : transform_() {}
     virtual ~request_transformer() {}
@@ -67,7 +67,7 @@ struct request_transformer_func {
     using transformer_type = Transformer;
     using request_type = typename transformer_type::request_type;
     using request_pointer = typename transformer_type::pointer;
-    using prerequisites_type = prereqiusites< Prerequisite ... >;
+    using prerequisites_type = prerequisites< Prerequisite ... >;
 
     void
     operator()(reply r) const
