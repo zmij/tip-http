@@ -119,6 +119,7 @@ private:
 
     stop_function       stop_;
     ::std::atomic_flag  stopped_;
+    ::std::atomic<bool> accepting_;
 };
 
 } // namespace server

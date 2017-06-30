@@ -39,7 +39,8 @@ server::server(io_service_ptr io_svc,
             new_connection_(),
             request_handler_(handler),
             stop_(stop),
-            stopped_{false}
+            stopped_{false},
+            accepting_{false}
 {
     if (reg_signals)
         register_signals();
@@ -112,17 +113,20 @@ void
 server::start_accept()
 {
     local_log(logger::DEBUG) << "Open HTTP acceptor";
+    accepting_ = true;
     start_accept_silent();
 }
 
 void
 server::start_accept_silent()
 {
-    new_connection_.reset(new connection(io_service_, request_handler_));
-    auto endpoint = std::make_shared<boost::asio::ip::tcp::endpoint>();
-    acceptor_.async_accept(new_connection_->socket(), *endpoint,
-            std::bind(&server::handle_accept, this,
-                    std::placeholders::_1, endpoint));
+    if (accepting_) {
+        new_connection_.reset(new connection(io_service_, request_handler_));
+        auto endpoint = std::make_shared<boost::asio::ip::tcp::endpoint>();
+        acceptor_.async_accept(new_connection_->socket(), *endpoint,
+                std::bind(&server::handle_accept, this,
+                        std::placeholders::_1, endpoint));
+    }
 }
 
 void
@@ -139,6 +143,7 @@ void
 server::stop_accept()
 {
     local_log(logger::DEBUG) << "Close HTTP acceptor";
+    accepting_ = false;
     acceptor_.close();
 }
 
