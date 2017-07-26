@@ -264,7 +264,8 @@ struct session_fsm_ :
             on_entry(Event const&, online& fsm)
             {
                 local_log() << "entering wait_request";
-                fsm.session_->idle();
+                if (fsm.session_->get_deferred_queue().empty())
+                    fsm.session_->idle();
             }
             template < typename Event, typename FSM >
             void
@@ -324,6 +325,7 @@ struct session_fsm_ :
                         << resp_state.req_.request_->method
                         << " " << resp_state.req_.request_->path
                         << " " << resp.response_->status;
+                fsm.session_->request_handled();
                 if (resp_state.req_.success_) {
                     try {
                         resp_state.req_.success_(resp_state.req_.request_, resp.response_);
@@ -339,7 +341,6 @@ struct session_fsm_ :
                     local_log(logger::WARNING) << "No response callback";
                 }
                 resp_state.req_ = events::request{};
-                fsm.session_->request_handled();
             }
         };
         //@}
