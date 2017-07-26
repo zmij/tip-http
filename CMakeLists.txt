@@ -90,6 +90,7 @@ include_directories(
     ${TIP_UTIL_INCLUDE_DIRS}
     ${PUSHKIN_L10N_INCLUDE_DIRS}
     ${CEREAL_INCLUDE_DIR}
+    ${AFSM_INCLUDE_DIRS} # TODO Add search script / sublibrary
 )
 
 link_directories(${TIP_IRI_LIB_DIR} ${TIP_LOG_LIB_DIR})

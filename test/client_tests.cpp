@@ -26,7 +26,7 @@ TEST(HttpClient, ServiceGet)
     ASSERT_NO_THROW( boost::asio::use_service< service >(io_service) );
 }
 
-TEST(HttpClient, NoEventQueue)
+TEST(HttpClient, DISABLED_NoEventQueue)
 {
     boost::asio::io_service io_service;
     request::iri_type iri;

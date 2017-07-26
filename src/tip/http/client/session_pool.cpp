@@ -33,6 +33,23 @@ void
 session_pool::do_send_request(request_ptr req, response_callback cb, error_callback ecb)
 {
     local_log() << "Send request";
+    // FIXME Magic number in retry_count
+    send_with_retries(req, 5, cb, ecb);
+}
+
+void
+session_pool::send_with_retries(request_ptr req, int retry_count, response_callback cb, error_callback ecb)
+{
+//    if (retry_count > 0) {
+//        auto _this = shared_from_this();
+//
+//        auto retry = [_this, req, cb, ecb, retry_count](::std::exception_ptr ex) {
+//            local_log() << "Retry handler fired, retry count " << retry_count;
+//            _this->send_with_retries(req, retry_count - 1, cb, ecb);
+//        };
+//        ecb = retry;
+//    }
+
     lock_type lock{mtx_};
     if (!idle_sessions_.empty()) {
         session_ptr s = idle_sessions_.front();
@@ -46,6 +63,7 @@ session_pool::do_send_request(request_ptr req, response_callback cb, error_callb
         requests_.push_back( ::std::make_tuple(req, cb, ecb) );
     }
 }
+
 
 void
 session_pool::do_close()

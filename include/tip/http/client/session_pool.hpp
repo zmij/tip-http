@@ -47,6 +47,9 @@ private:
     do_send_request(request_ptr req, response_callback cb, error_callback) override;
 
     void
+    send_with_retries(request_ptr req, int retry_count, response_callback cb, error_callback ecb);
+
+    void
     do_close() override;
 
     ::std::size_t
