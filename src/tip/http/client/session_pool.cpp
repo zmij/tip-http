@@ -24,7 +24,7 @@ session_pool::session_pool(io_service& svc, request::iri_type const& iri,
         session_callback on_close, headers const& default_headers,
         ::std::size_t max_sessions)
     : svc_(svc), iri_(iri), default_headers_(default_headers),
-      max_sessions_(max_sessions != 0 ? max_sessions : 1),
+      // max_sessions_(max_sessions != 0 ? max_sessions : 1), AWM-11130
       closed_(false), on_close_(on_close)
 {
 }
@@ -51,17 +51,17 @@ session_pool::send_with_retries(request_ptr req, int retry_count, response_callb
 //    }
 
     lock_type lock{mtx_};
-    if (!idle_sessions_.empty()) {
-        session_ptr s = idle_sessions_.front();
-        idle_sessions_.pop_front();
-        s->send_request(req, cb, ecb);
-    } else {
-        if (sessions_.size() < max_sessions_) {
+//    if (!idle_sessions_.empty()) {
+//        session_ptr s = idle_sessions_.front();
+//        idle_sessions_.pop_front();
+//        s->send_request(req, cb, ecb);
+//    } else {
+//        if (sessions_.size() < max_sessions_) {
             sessions_.insert(start_session());
-        }
+//        }
         local_log() << "No idle connections, enqueue request";
         requests_.push_back( ::std::make_tuple(req, cb, ecb) );
-    }
+//    }
 }
 
 
@@ -101,8 +101,14 @@ session_pool::session_idle(session_ptr s)
     local_log() << "Session idle";
     lock_type lock{mtx_};
     if (requests_.empty()) {
-        idle_sessions_.push_back(s);
+        local_log() << "No pending requests";
+        if (s->request_count()) {
+            session_closed(s, nullptr);
+        } else {
+            idle_sessions_.push_back(s);
+        }
     } else {
+        local_log() << "Pass request to session";
         auto req = requests_.front();
         requests_.pop_front();
         s->send_request(

@@ -65,7 +65,7 @@ private:
     io_service&             svc_;
     request::iri_type       iri_;
     headers                 default_headers_;
-    ::std::size_t           max_sessions_;
+    // ::std::size_t           max_sessions_; AWM-11130 hotfix
 
     mutex_type              mtx_;
 
