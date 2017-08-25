@@ -6,10 +6,10 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/server/json_body_context.hpp>
+#include <pushkin/http/server/json_body_context.hpp>
 
 
-namespace tip {
+namespace psst {
 namespace http {
 namespace server {
 

@@ -7,9 +7,9 @@
 
 #include <gtest/gtest.h>
 #include <grammar/grammar_gen_test.hpp>
-#include <tip/http/common/grammar/datetime_generate.hpp>
+#include <pushkin/http/common/grammar/datetime_generate.hpp>
 
-namespace gen = tip::http::grammar::gen;
+namespace gen = psst::http::grammar::gen;
 namespace pt = boost::posix_time;
 
 TEST(GenerateTest, DateTime)

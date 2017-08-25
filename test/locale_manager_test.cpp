@@ -6,11 +6,11 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/server/locale_manager.hpp>
+#include <pushkin/http/server/locale_manager.hpp>
 #include "config.hpp"
 #include <boost/locale.hpp>
 
-namespace tip {
+namespace psst {
 namespace http {
 namespace server {
 namespace test {

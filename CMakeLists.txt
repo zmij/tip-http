@@ -95,8 +95,8 @@ include_directories(
 
 link_directories(${TIP_IRI_LIB_DIR} ${TIP_LOG_LIB_DIR})
 
-add_subdirectory(include/tip/http)
-add_subdirectory(src/tip/http)
+add_subdirectory(include/pushkin/http)
+add_subdirectory(src/pushkin/http)
 
 if(BUILD_TESTS)
     enable_testing()

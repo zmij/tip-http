@@ -5,13 +5,13 @@
  *      Author: zmij
  */
 
-#include <tip/http/common/grammar/base64_generate.hpp>
-#include <tip/http/common/grammar/base64_parse.hpp>
+#include <pushkin/http/common/grammar/base64_generate.hpp>
+#include <pushkin/http/common/grammar/base64_parse.hpp>
 #include "grammar/grammar_gen_test.hpp"
 #include "grammar/grammar_parse_test.hpp"
 
-namespace gen = tip::http::grammar::gen;
-namespace parse = tip::http::grammar::parse;
+namespace gen = psst::http::grammar::gen;
+namespace parse = psst::http::grammar::parse;
 
 GRAMMAR_GEN_TEST(gen::base64_grammar, Base64, std::string,
 	::testing::Values(

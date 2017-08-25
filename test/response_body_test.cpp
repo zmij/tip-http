@@ -6,7 +6,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/common/response.hpp>
+#include <pushkin/http/common/response.hpp>
 #include <string>
 #include <sstream>
 
@@ -16,7 +16,7 @@ class ChunkedResponseTest :
 
 TEST_P(ChunkedResponseTest, ReadChunked)
 {
-	namespace http = tip::http;
+	namespace http = ::psst::http;
 	ParamType param = GetParam();
 	http::response r;
 	ParamType::iterator b = param.begin();
@@ -68,7 +68,7 @@ INSTANTIATE_TEST_CASE_P(ResponseTest, ChunkedResponseTest,
 
 TEST(Response, ReadChunked)
 {
-	namespace http = tip::http;
+	namespace http = ::psst::http;
 	std::string response_str =
 		"HTTP/1.1 200 OK\r\n"
 		"Transfer-Encoding: chunked\r\n"

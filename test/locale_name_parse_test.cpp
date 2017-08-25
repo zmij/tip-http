@@ -8,10 +8,10 @@
 #include <gtest/gtest.h>
 #include <grammar/grammar_parse_test.hpp>
 #include <grammar/grammar_gen_test.hpp>
-#include <tip/http/server/grammar/locale_name.hpp>
+#include <pushkin/http/server/grammar/locale_name.hpp>
 #include <set>
 
-namespace http = tip::http;
+namespace http = psst::http;
 namespace parse = http::server::grammar::parse;
 namespace gen = http::server::grammar::gen;
 

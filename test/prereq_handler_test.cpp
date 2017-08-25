@@ -6,9 +6,9 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/server/prerequisite_handler.hpp>
+#include <pushkin/http/server/prerequisite_handler.hpp>
 
-namespace tip {
+namespace psst {
 namespace http {
 namespace server {
 namespace test {
@@ -28,5 +28,5 @@ class test_handler : public prerequisite_handler< some_test_prerequisite > {
 }  // namespace test
 }  // namespace server
 }  // namespace http
-}  // namespace tip
+}  // namespace psst
 

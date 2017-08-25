@@ -8,9 +8,9 @@
 #include <gtest/gtest.h>
 #include <boost/spirit/include/support_multi_pass.hpp>
 #include <grammar/grammar_parse_test.hpp>
-#include <tip/http/common/grammar/request_parse.hpp>
+#include <pushkin/http/common/grammar/request_parse.hpp>
 
-namespace http = tip::http;
+namespace http = psst::http;
 namespace parse = http::grammar::parse;
 
 GRAMMAR_TEST(parse::header_name_grammar, HeaderName,
@@ -55,9 +55,9 @@ GRAMMAR_TEST(parse::header_grammar, HeaderKeyValue,
 GRAMMAR_PARSE_TEST(parse::header_grammar, Header, http::header,
 	::testing::Values(
 		ParseHeader::make_test_data("Accept: text/plain\r\n",
-				{tip::http::Accept, "text/plain"}),
+				{http::Accept, "text/plain"}),
 		ParseHeader::make_test_data("Content-Length: 1348\r\n",
-				{tip::http::ContentLength, "1348"}),
+				{http::ContentLength, "1348"}),
 		ParseHeader::make_test_data("X-Custom-Header: custom value\r\n",
 				{"X-Custom-Header", "custom value"})
 	)
@@ -106,10 +106,10 @@ GRAMMAR_PARSE_TEST(parse::headers_grammar, Headers, http::headers,
 			"Content-Language: en, ase, ru\r\n"
 			"Content-Length: 1348\r\n",
 			{
-				{ tip::http::Accept, "text/plain" },
-				{ tip::http::Allow, "OPTIONS, GET, HEAD" },
-				{ tip::http::ContentLanguage, "en, ase, ru" },
-				{ tip::http::ContentLength, "1348" }
+				{ http::Accept, "text/plain" },
+				{ http::Allow, "OPTIONS, GET, HEAD" },
+				{ http::ContentLanguage, "en, ase, ru" },
+				{ http::ContentLength, "1348" }
 			}
 		)
 	)

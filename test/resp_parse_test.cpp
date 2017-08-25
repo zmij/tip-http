@@ -7,12 +7,12 @@
 
 #include <gtest/gtest.h>
 #include <grammar/grammar_parse_test.hpp>
-#include <tip/http/common/grammar/response_parse.hpp>
+#include <pushkin/http/common/grammar/response_parse.hpp>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
-namespace http = tip::http;
+namespace http = psst::http;
 namespace parse = http::grammar::parse;
 GRAMMAR_TEST( parse::response_grammar, Response,
 	::testing::Values(

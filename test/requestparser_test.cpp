@@ -36,7 +36,7 @@ const std::string MULTIPART_REQUEST = "05.post.request";
 
 TEST(RequestParser, GetRequest)
 {
-	using namespace tip::http;
+	using namespace http;
 	ASSERT_TRUE(!test::DATA_DIR.empty());
 	for (auto file_name : GET_REQUESTS) {
 		std::string req_name = test::DATA_DIR + file_name;
@@ -56,7 +56,7 @@ TEST(RequestParser, GetRequest)
 
 TEST(RequestParser, PostUrlEncoded)
 {
-	using namespace tip::http;
+	using namespace http;
 	ASSERT_TRUE(!test::DATA_DIR.empty());
 	std::string req_name = test::DATA_DIR + URLENCODED_REQUEST;
 	std::ifstream file(req_name, std::ios_base::binary);
@@ -76,7 +76,7 @@ TEST(RequestParser, PostUrlEncoded)
 
 TEST(RequestParser, ParsePostMultipart)
 {
-	using namespace tip::http;
+	using namespace http;
 	ASSERT_TRUE(!test::DATA_DIR.empty());
 	std::string req_name = test::DATA_DIR + MULTIPART_REQUEST;
 	std::ifstream file(req_name, std::ios_base::binary);

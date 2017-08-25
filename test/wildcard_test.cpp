@@ -6,12 +6,12 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/util/wildcard_grammar.hpp>
+#include <pushkin/util/wildcard_grammar.hpp>
 #include <grammar/grammar_parse_test.hpp>
 
 template < typename InputIterator >
 using wildcard_grammar =
-		tip::util::grammar::parse::wildcard_grammar<InputIterator, std::string >;
+		psst::util::grammar::parse::wildcard_grammar<InputIterator, std::string >;
 
 GRAMMAR_TEST(wildcard_grammar, Wildcard,
 	::testing::Values(
@@ -21,8 +21,8 @@ GRAMMAR_TEST(wildcard_grammar, Wildcard,
 		"foo", "bar", "::", ":param/pam/pam:"
 	)
 );
-typedef tip::util::wildcard< std::string > wildcard;
-GRAMMAR_PARSE_TEST(wildcard_grammar, Wildcard, tip::util::wildcard< std::string >,
+typedef psst::util::wildcard< std::string > wildcard;
+GRAMMAR_PARSE_TEST(wildcard_grammar, Wildcard, psst::util::wildcard< std::string >,
 	::testing::Values(
 		ParseWildcard::make_test_data( "*", wildcard{ true } ),
 		ParseWildcard::make_test_data( "?", wildcard{ false } ),

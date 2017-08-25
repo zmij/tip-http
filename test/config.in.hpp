@@ -5,12 +5,12 @@
  *      Author: zmij
  */
 
-#ifndef HTTP_CONFIG_IN_HPP_
-#define HTTP_CONFIG_IN_HPP_
+#ifndef PUSHKIN_HTTP_TEST_CONFIG_IN_HPP_
+#define PUSHKIN_HTTP_TEST_CONFIG_IN_HPP_
 
 #include <string>
 
-namespace tip {
+namespace psst {
 namespace http {
 namespace test {
 
@@ -21,6 +21,6 @@ const std::string DOMAINS = "@L10N_DOMAINS@";
 
 }  // namespace test
 }  // namespace http
-}  // namespace tip
+}  // namespace psst
 
-#endif /* HTTP_CONFIG_IN_HPP_ */
+#endif /* PUSHKIN_HTTP_TEST_CONFIG_IN_HPP_ */

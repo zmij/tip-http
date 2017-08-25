@@ -7,11 +7,11 @@
 
 #include <gtest/gtest.h>
 #include <grammar/grammar_parse_test.hpp>
-#include <tip/http/server/detail/pathmatcher_parse.hpp>
+#include <pushkin/http/server/detail/pathmatcher_parse.hpp>
 
-namespace parse = tip::http::server::grammar::parse;
-namespace http = tip::http::server::detail;
-typedef tip::util::wildcard< std::string > string_wildcard;
+namespace parse = psst::http::server::grammar::parse;
+namespace http = psst::http::server::detail;
+typedef psst::util::wildcard< std::string > string_wildcard;
 
 GRAMMAR_TEST(parse::match_path_segment_grammar, PathSegment,
 	::testing::Values(

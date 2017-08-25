@@ -6,9 +6,9 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/common/response_status.hpp>
+#include <pushkin/http/common/response_status.hpp>
 
-namespace tip {
+namespace psst {
 namespace http {
 namespace common {
 namespace test {
@@ -35,5 +35,5 @@ TEST(ResponseTest, StatusClass)
 }  // namespace test
 }  // namespace common
 }  // namespace http
-}  // namespace tip
+}  // namespace psst
 

@@ -6,9 +6,10 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/server/detail/path_matcher.hpp>
+#include <pushkin/http/server/detail/path_matcher.hpp>
 
-using tip::http::server::detail::path_matcher;
+using ::psst::http::server::detail::path_matcher;
+
 TEST(PathMatcher, Construction)
 {
 
@@ -42,8 +43,8 @@ TEST(PathMatcher, EmptyMatchTest)
 
 TEST(PathMatcher, SegmentSortOrder)
 {
-	typedef tip::util::wildcard< std::string > wildcard;
-	typedef tip::http::server::detail::path_segment path_segment;
+	using wildcard = psst::util::wildcard< std::string >;
+	using path_segment = psst::http::server::detail::path_segment;
 
 	{
 		wildcard kleene_w{true};

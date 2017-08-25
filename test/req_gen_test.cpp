@@ -5,43 +5,43 @@
  *      Author: zmij
  */
 
-#include <tip/http/common/grammar/request_generate.hpp>
+#include <pushkin/http/common/grammar/request_generate.hpp>
 #include "grammar/grammar_gen_test.hpp"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 
-namespace gen = tip::http::grammar::gen;
-namespace iri_gen = tip::iri::grammar::gen;
-namespace http = tip::http;
+namespace http = ::psst::http;
+namespace gen = http::grammar::gen;
+namespace iri_gen = ::tip::iri::grammar::gen;
 
-GRAMMAR_GEN_TEST(gen::header_name_grammar, HeaderName, tip::http::header_name,
+GRAMMAR_GEN_TEST(gen::header_name_grammar, HeaderName, http::header_name,
     ::testing::Values(
-        GenerateHeaderName::make_test_data( tip::http::Accept, "Accept" ),
-        GenerateHeaderName::make_test_data( tip::http::UserAgent, "User-Agent" ),
+        GenerateHeaderName::make_test_data( http::Accept, "Accept" ),
+        GenerateHeaderName::make_test_data( http::UserAgent, "User-Agent" ),
         GenerateHeaderName::make_test_data( "X-Custom-Header", "X-Custom-Header" )
     )
 );
 
-GRAMMAR_GEN_TEST(gen::header_grammar, Header, tip::http::header,
+GRAMMAR_GEN_TEST(gen::header_grammar, Header, http::header,
     ::testing::Values(
         GenerateHeader::make_test_data(
-            { tip::http::Accept, "text/plain" },
+            { psst::http::Accept, "text/plain" },
             "Accept: text/plain\r\n"
         ),
         GenerateHeader::make_test_data(
-            {tip::http::ContentLength, "1348"},
+            {psst::http::ContentLength, "1348"},
             "Content-Length: 1348\r\n"
         )
     )
 );
 
-GRAMMAR_GEN_TEST(gen::headers_grammar, Headers, tip::http::headers,
+GRAMMAR_GEN_TEST(gen::headers_grammar, Headers, ::psst::http::headers,
     ::testing::Values(
         GenerateHeaders::make_test_data(
             {
-                { tip::http::Accept, "text/plain" },
-                { tip::http::ContentLength, "100500" },
+                { psst::http::Accept, "text/plain" },
+                { psst::http::ContentLength, "100500" },
                 { "X-Foo-Bar", "FooBar" }
             },
             "Accept: text/plain\r\n"

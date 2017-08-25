@@ -7,9 +7,9 @@
 
 #include <gtest/gtest.h>
 #include <grammar/grammar_parse_test.hpp>
-#include <tip/http/common/grammar/cookie_parse.hpp>
+#include <pushkin/http/common/grammar/cookie_parse.hpp>
 
-namespace http = tip::http;
+namespace http = psst::http;
 namespace parse = http::grammar::parse;
 
 GRAMMAR_TEST(parse::ctl_grammar, Ctl,

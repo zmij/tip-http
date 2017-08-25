@@ -6,14 +6,14 @@
  */
 
 #include <gtest/gtest.h>
-#include <tip/http/client/service.hpp>
-#include <tip/http/client/session.hpp>
-#include <tip/http/client/session_pool.hpp>
-#include <tip/http/common/response.hpp>
+#include <pushkin/http/client/service.hpp>
+#include <pushkin/http/client/session.hpp>
+#include <pushkin/http/client/session_pool.hpp>
+#include <pushkin/http/common/response.hpp>
 #include <tip/ssl_context_service.hpp>
 #include <pushkin/log.hpp>
 
-namespace tip {
+namespace psst {
 namespace http {
 namespace client {
 namespace test {
@@ -146,8 +146,8 @@ TEST(HttpClient, FailConnecting)
 
 TEST(HttpsClient, FailVerifyCert)
 {
-    using http_service = tip::http::client::service;
-    using tip::http::response_ptr;
+    using http_service = psst::http::client::service;
+    using psst::http::response_ptr;
     boost::asio::io_service io_service;
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
