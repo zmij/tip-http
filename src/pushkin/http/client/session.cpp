@@ -22,6 +22,8 @@
 #include <pushkin/http/common/response.hpp>
 #include <pushkin/util/misc_algorithm.hpp>
 
+#include <pushkin/http/client/connection_fsm_observer.hpp>
+
 namespace psst {
 namespace http {
 namespace client {
@@ -38,9 +40,13 @@ struct tcp_transport {
     tcp::resolver resolver_;
     socket_type socket_;
 
-    tcp_transport(io_service& io_service, session::connection_id const& conn_id,
-            connect_callback cb) :
+    tcp_transport(io_service& io_service) :
             resolver_(io_service), socket_(io_service)
+    {
+    }
+
+    void
+    connect(session::connection_id const& conn_id, connect_callback cb)
     {
         tcp::resolver::query
             qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
@@ -96,10 +102,15 @@ struct ssl_transport {
     tcp::resolver resolver_;
     socket_type socket_;
 
-    ssl_transport(io_service& io_service, session::connection_id const& conn_id, connect_callback cb) :
+    ssl_transport(io_service& io_service) :
         resolver_(io_service),
         socket_( io_service,
                 boost::asio::use_service<tip::ssl::ssl_context_service>(io_service).context() )
+    {
+    }
+
+    void
+    connect(session::connection_id const& conn_id, connect_callback cb)
     {
         tcp::resolver::query
             qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
@@ -200,7 +211,6 @@ struct session_fsm_def :
         public std::enable_shared_from_this< SharedType > {
     using transport_type        = TransportType;
     using shared_type           = SharedType;
-    using session_fsm           = ::afsm::state_machine<session_fsm_def< TransportType, SharedType >>;
     using shared_base           = std::enable_shared_from_this< shared_type >;
     using io_service            = boost::asio::io_service;
     using buffer_type           = boost::asio::streambuf;
@@ -233,33 +243,8 @@ struct session_fsm_def :
         using deferred_events = ::psst::meta::type_tuple<
                 events::request
             >;
-        template <typename FSM>
-        void
-        on_exit(events::transport_error const&, FSM& fsm)
-        {
-            local_log() << "exiting unplugged (error)";
-        }
-        template < typename Event, typename FSM >
-        void
-        on_exit(Event const&, FSM&)
-        {
-            local_log() << "exiting unplugged";
-        }
     };
     struct online : state_machine<online> {
-        template < typename Event, typename FSM >
-        void
-        on_enter(Event const&, FSM& fsm)
-        {
-            local_log() << "entering online";
-            session_ = &fsm;
-        }
-        template < typename Event, typename FSM >
-        void
-        on_exit(Event const&, FSM&)
-        {
-            local_log() << "exiting online";
-        }
         //@{
         /** @name States */
         struct wait_request : state< wait_request > {
@@ -267,33 +252,14 @@ struct session_fsm_def :
             void
             on_enter(Event const&, FSM& fsm)
             {
-                local_log() << "entering wait_request";
-                //if (fsm.session_->get_deferred_queue().empty())
-                    fsm.session_->idle();
-            }
-            template < typename Event, typename FSM >
-            void
-            on_exit(Event const&, FSM&)
-            {
-                local_log() << "exiting wait_request";
+                root_machine(fsm)->idle();
             }
         };
         struct wait_response : state<wait_response> {
-            template < typename Event, typename FSM >
-            void
-            on_enter(Event const&, FSM&)
-            { local_log() << "entering wait_response"; }
-
-            template < typename Event, typename FSM >
-            void
-            on_exit(Event const&, FSM&)
-            { local_log() << "exiting wait_response"; }
-
             template < typename FSM >
             void
             on_exit(events::transport_error const& evt, FSM&)
             {
-                local_log() << "exiting wait_response (on error)";
                 if (req_.fail_) {
                     req_.fail_(evt.error);
                 }
@@ -315,7 +281,7 @@ struct session_fsm_def :
             operator()(events::request const& req, FSM& fsm, SourceState&,
                     wait_response& resp_state)
             {
-                fsm.session_->send_request(*req.request_.get());
+                root_machine(fsm)->write_request(*req.request_.get());
                 resp_state.req_ = req;
             }
         };
@@ -329,7 +295,7 @@ struct session_fsm_def :
                         << resp_state.req_.request_->method
                         << " " << resp_state.req_.request_->path
                         << " " << resp.response_->status;
-                fsm.session_->request_handled();
+                root_machine(fsm)->request_handled();
                 if (resp_state.req_.success_) {
                     try {
                         resp_state.req_.success_(resp_state.req_.request_, resp.response_);
@@ -355,8 +321,7 @@ struct session_fsm_def :
             tr <    wait_response,   events::response,   wait_request,     process_reply,   none        >
         >;
 
-        online() : session_(nullptr) {}
-        session_fsm* session_;
+        online() {}
     };
 
     struct connection_failed : state< connection_failed > {
@@ -366,7 +331,6 @@ struct session_fsm_def :
         void
         on_enter(events::transport_error const& evt, FSM& fsm)
         {
-            local_log() << "entering connection failed.";
             error = evt.error;
             fsm.notify_closed(evt.error);
         }
@@ -374,7 +338,6 @@ struct session_fsm_def :
         void
         on_exit(Event const&, FSM& fsm)
         {
-            local_log() << "exiting connection failed";
             error = nullptr;
         }
 
@@ -410,14 +373,12 @@ struct session_fsm_def :
         void
         on_enter(events::transport_error const& evt, FSM& fsm)
         {
-            local_log() << "entering terminated (error)";
             fsm.notify_closed(evt.error);
         }
         template < typename Event, typename FSM >
         void
-        on_entry(Event const&, FSM& fsm)
+        on_enter(Event const&, FSM& fsm)
         {
-            local_log() << "entering terminated";
             fsm.notify_closed(nullptr);
         }
     };
@@ -447,31 +408,13 @@ struct session_fsm_def :
         tr< online              , events::disconnect        , terminated        , disconnect_transport  , none  >,
         tr< connection_failed   , events::disconnect        , terminated        , none                  , none  >
     >;
-
-    template < typename Event, typename FSM >
-    void
-    no_transition(Event const& e, FSM&, int state)
-    {
-        local_log(logger::DEBUG) << "No transition from state " << state
-                << " on event " << typeid(e).name() << " (in transaction)";
-    }
-    template <class FSM,class Event>
-    void exception_caught (Event const& evt, FSM& , std::exception& ex )
-    {
-        local_log(logger::DEBUG) << "Exception caught on event "
-                << typeid(evt).name() << " " << typeid(ex).name()
-                << ": " << ex.what();
-    }
     //@}
     session_fsm_def(io_service& io_service, request::iri_type const& iri,
             session::session_callback on_idle, session::session_error on_close,
             headers const& default_headers) :
         io_service_{io_service},
         strand_{io_service},
-        transport_{io_service, session::create_connection_id(iri),
-            strand_.wrap(
-                std::bind( &session_fsm_def::handle_connect,
-                        this, std::placeholders::_1 ))},
+        transport_{io_service},
         host_{iri.authority.host}, scheme_{iri.scheme},
         default_headers_{default_headers}, on_idle_(on_idle), on_close_{on_close},
         req_count_{0}
@@ -479,6 +422,15 @@ struct session_fsm_def :
     }
 
     virtual ~session_fsm_def() {}
+
+    void
+    connect(request::iri_type const& iri)
+    {
+        using std::placeholders::_1;
+        transport_.connect(session::create_connection_id(iri),
+                ::std::bind(&session_fsm_def::handle_connect,
+                        shared_base::shared_from_this(), _1));
+    }
 
     void
     handle_connect(::std::exception_ptr ex)
@@ -496,14 +448,15 @@ struct session_fsm_def :
                 local_log(logger::ERROR) << "Error connecting to "
                         << scheme_ << "://" << host_ << ": " << e.what();
                 fsm().process_event(events::transport_error{
-                    ::std::current_exception()
+                    ::std::make_exception_ptr(e)
                 });
             }
         }
     }
 
+    // TODO Delegate this to protocol
     void
-    send_request(request const& req)
+    write_request(request const& req)
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
@@ -545,6 +498,8 @@ struct session_fsm_def :
             });
         }
     }
+
+    // TODO Delegate this to protocol
     void
     handle_read_headers(error_code const& ec, size_t)
     {
@@ -565,7 +520,7 @@ struct session_fsm_def :
             });
         }
     }
-
+    // TODO Delegate this to protocol
     void
     read_body(response_ptr resp, response::read_result_type res)
     {
@@ -649,16 +604,35 @@ struct session_fsm_def :
             local_log() << "No on close handler for session";
         }
     }
+
+    shared_type*
+    operator ->()
+    {
+        return static_cast<shared_type*>(this);
+    }
+
+    shared_type const*
+    operator ->() const
+    {
+        return static_cast<shared_type const*>(this);
+    }
+
+    ::std::ostream&
+    tag(::std::ostream& os) const
+    {
+        os << host_;
+        return os;
+    }
 private:
-    session_fsm&
+    shared_type&
     fsm()
     {
-        return static_cast< session_fsm& >(*this);
+        return static_cast< shared_type& >(*this);
     }
-    session_fsm const&
+    shared_type const&
     fsm() const
     {
-        return static_cast< session_fsm const& >(*this);
+        return static_cast< shared_type const& >(*this);
     }
 protected:
     io_service&                         io_service_;
@@ -681,10 +655,10 @@ protected:
 template < typename TransportType >
 class session_impl : public session,
     public ::afsm::state_machine< session_fsm_def< TransportType,
-            session_impl< TransportType > > > {
+            session_impl< TransportType > >, ::afsm::none, observer::conection_fsm_observer > {
 public:
     using base_type = ::afsm::state_machine< session_fsm_def< TransportType,
-            session_impl< TransportType > > >;
+            session_impl< TransportType > >, ::afsm::none, observer::conection_fsm_observer >;
     using this_type = session_impl< TransportType >;
 
     session_impl(io_service& io_service, request::iri_type const& iri,
@@ -692,6 +666,7 @@ public:
             headers const& default_headers) :
         base_type(std::ref(io_service), iri, on_idle, on_close, default_headers)
     {
+        this->make_observer();
     }
 
     virtual ~session_impl()
@@ -708,6 +683,7 @@ public:
     void
     do_close() override
     {
+        local_log() << "close session";
         base_type::process_event( events::disconnect() );
     }
     ::std::size_t
@@ -769,9 +745,13 @@ session::create(io_service& svc, request::iri_type const& iri,
     local_log() << "Create session " << iri.scheme << "://" << iri.authority.host
             << iri.path;
     if (iri.scheme == tip::iri::scheme{ "http" }) {
-        return std::make_shared< http_session >( svc, iri, on_idle, on_close, default_headers );
+        auto s = std::make_shared< http_session >( svc, iri, on_idle, on_close, default_headers );
+        s->connect(iri);
+        return s;
     } else if (iri.scheme == tip::iri::scheme{ "https" }) {
-        return std::make_shared< https_session >( svc, iri, on_idle, on_close, default_headers );
+        auto s = std::make_shared< https_session >( svc, iri, on_idle, on_close, default_headers );
+        s->connect(iri);
+        return s;
     }
     // TODO Throw an exception
     local_log(logger::ERROR) << "Unsupported scheme for HTTP client " << iri.scheme;

@@ -67,7 +67,15 @@ TEST(HttpClient, Session)
         session->close();
         io_service.stop();
     },
-    [&](std::exception_ptr) {io_service.stop();});
+    [&](std::exception_ptr ex) {
+        try {
+            ::std::rethrow_exception(ex);
+        } catch (::std::exception const& e) {
+            local_log(logger::WARNING) << "Received an exception " << e.what();
+        }
+        session->close();
+        io_service.stop();
+    });
 
     io_service.run();
     EXPECT_TRUE(session_closed);
