@@ -7,7 +7,7 @@
 
 #include <pushkin/http/server/connection.hpp>
 
-#include <tip/http/version.hpp>
+#include <pushkin/http/version.hpp>
 
 #include <pushkin/log.hpp>
 
