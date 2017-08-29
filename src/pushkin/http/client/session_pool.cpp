@@ -25,7 +25,7 @@ session_pool::session_pool(io_service& svc, request::iri_type const& iri,
         session_callback on_close, headers const& default_headers,
         ::std::size_t max_sessions)
     : svc_(svc), iri_(iri), default_headers_(default_headers),
-      // max_sessions_(max_sessions != 0 ? max_sessions : 1), AWM-11130
+      max_sessions_(max_sessions != 0 ? max_sessions : 1),
       closed_(false), on_close_(on_close)
 {
 }
@@ -41,28 +41,28 @@ session_pool::do_send_request(request_ptr req, response_callback cb, error_callb
 void
 session_pool::send_with_retries(request_ptr req, int retry_count, response_callback cb, error_callback ecb)
 {
-//    if (retry_count > 0) {
-//        auto _this = shared_from_this();
-//
-//        auto retry = [_this, req, cb, ecb, retry_count](::std::exception_ptr ex) {
-//            local_log() << "Retry handler fired, retry count " << retry_count;
-//            _this->send_with_retries(req, retry_count - 1, cb, ecb);
-//        };
-//        ecb = retry;
-//    }
+    if (retry_count > 0) {
+        auto _this = shared_from_this();
+
+        auto retry = [_this, req, cb, ecb, retry_count](::std::exception_ptr ex) {
+            local_log() << "Retry handler fired, retry count " << retry_count;
+            _this->send_with_retries(req, retry_count - 1, cb, ecb);
+        };
+        ecb = retry;
+    }
 
     lock_type lock{mtx_};
-//    if (!idle_sessions_.empty()) {
-//        session_ptr s = idle_sessions_.front();
-//        idle_sessions_.pop_front();
-//        s->send_request(req, cb, ecb);
-//    } else {
-//        if (sessions_.size() < max_sessions_) {
+    if (!idle_sessions_.empty()) {
+        session_ptr s = idle_sessions_.front();
+        idle_sessions_.pop_front();
+        s->send_request(req, cb, ecb);
+    } else {
+        if (sessions_.size() < max_sessions_) {
             sessions_.insert(start_session());
-//        }
+        }
         local_log() << "No idle connections, enqueue request";
         requests_.push_back( ::std::make_tuple(req, cb, ecb) );
-//    }
+    }
 }
 
 
