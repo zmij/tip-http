@@ -21,12 +21,14 @@ using header_name = boost::variant< known_header_name, std::string >;
 using header = std::pair<header_name, std::string>;
 using headers = std::multimap<header_name, std::string>;
 
+using content_size = ::std::int64_t;
+
 std::ostream&
 operator << (std::ostream&, header const&);
 std::ostream&
 operator << (std::ostream&, headers const&);
 
-size_t
+content_size
 content_length(headers const& hdrs);
 
 bool

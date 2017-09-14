@@ -44,7 +44,7 @@ operator << (std::ostream& out, headers const& val)
 }
 
 
-size_t
+content_size
 content_length(headers const& hdrs)
 {
 	namespace qi = boost::spirit::qi;
@@ -53,13 +53,13 @@ content_length(headers const& hdrs)
 	if (p != hdrs.end()) {
 		string_iterator f = p->second.begin();
 		string_iterator l = p->second.end();
-		size_t res;
-		if (qi::parse(f, l, qi::int_parser<size_t, 10>(), res) && f == l)
+		::std::int64_t res;
+		if (qi::parse(f, l, qi::int_parser<::std::int64_t, 10>(), res) && f == l)
 			return res;
 		else
 			throw std::runtime_error("Invalid Content-Length header");
 	}
-	return 0;
+	return -1;
 }
 
 bool

@@ -93,7 +93,7 @@ response::set_status(response_status s)
 	}
 }
 
-size_t
+content_size
 response::content_length() const
 {
 	return http::content_length(headers_);
@@ -124,7 +124,7 @@ response::read_headers(std::istream& is)
 response::read_result_type
 response::read_body(std::istream& is)
 {
-	size_t cl = content_length();
+    content_size cl = content_length();
 	if (cl > 0) {
 		// read ordinary body
 		body_.reserve(cl);
@@ -132,6 +132,8 @@ response::read_body(std::istream& is)
 	} else if (is_chunked()) {
 		// read chunked body
 		return read_body_chunks(is, 0);
+	} else if (cl == 0) {
+	    return { true, read_callback{} };
 	}
 	return {false, read_callback()};
 }

@@ -44,7 +44,7 @@ struct response {
 
 	void
 	set_status(response_status);
-	size_t
+	content_size
 	content_length() const;
 
 	bool

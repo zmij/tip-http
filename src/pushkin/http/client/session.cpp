@@ -535,7 +535,9 @@ struct session_fsm_def :
             // failed to read body
             local_log() << "Request to " << scheme_ << "://" << host_
                     << " failed read response body";
-            fsm().process_event( events::response{ resp } );
+            fsm().process_event(events::transport_error{
+                ::std::make_exception_ptr(errors::connection_broken{"Failed to read body"})
+            });
         } else if (res.callback) {
                 // need more data
                 local_log() << "Request to " << scheme_ << "://" << host_
