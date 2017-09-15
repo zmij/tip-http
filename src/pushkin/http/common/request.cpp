@@ -137,7 +137,7 @@ request::read_headers(std::istream& is)
 request::read_result_type
 request::read_body(std::istream& is)
 {
-    size_t cl = content_length();
+    auto cl = content_length();
     if (cl > 0) {
         return read_body_content_length(is, cl);
     }
