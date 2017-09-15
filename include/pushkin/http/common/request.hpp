@@ -86,7 +86,7 @@ public:
         return *this;
     }
 
-    size_t
+    content_size
     content_length() const;
 
     void

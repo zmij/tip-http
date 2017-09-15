@@ -90,7 +90,7 @@ request::request(request&& rhs)
 {
 }
 
-size_t
+content_size
 request::content_length() const
 {
     return http::content_length(headers_);
