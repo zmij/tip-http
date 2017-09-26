@@ -481,18 +481,18 @@ namespace cereal
         public:
           Iterator() :
         	  itsMemberItBegin(nullptr), itsMemberItEnd(nullptr),
-			  itsValueItBegin(nullptr), itsValueItEnd(nullptr),
+			  itsValueItBegin(nullptr),
         	  itsIndex( 0 ), itsType(Null_) {}
 
           Iterator(MemberIterator begin, MemberIterator end) :
             itsMemberItBegin(begin), itsMemberItEnd(end),
-			itsValueItBegin(nullptr), itsValueItEnd(nullptr),
+			itsValueItBegin(nullptr),
 			itsIndex(0), itsType(Member)
           { }
 
           Iterator(ValueIterator begin, ValueIterator end) :
         	itsMemberItBegin(nullptr), itsMemberItEnd(nullptr),
-            itsValueItBegin(begin), itsValueItEnd(end),
+            itsValueItBegin(begin),
 			itsIndex(0), itsType(Value)
           { }
 
@@ -555,7 +555,7 @@ namespace cereal
 
         private:
           MemberIterator itsMemberItBegin, itsMemberItEnd; //!< The member iterator (object)
-          ValueIterator itsValueItBegin, itsValueItEnd;    //!< The value iterator (array)
+          ValueIterator itsValueItBegin;    //!< The value iterator (array)
           size_t itsIndex;                                 //!< The current index of this iterator
           enum Type {Value, Member, Null_} itsType;    //!< Whether this holds values (array) or members (objects) or nothing
       };
