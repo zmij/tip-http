@@ -16,7 +16,7 @@ namespace util {
 
 template < typename ... T >
 struct read_result {
-	using read_callback_type = std::function< read_result&&( T ... ) >;
+	typedef std::function< read_result( T ... ) > read_callback_type;
 	boost::tribool		result;
 	read_callback_type	callback;
 };
