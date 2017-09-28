@@ -1,3 +1,4 @@
+
 /*
  * read_result.hpp
  *
@@ -16,10 +17,31 @@ namespace util {
 
 template < typename ... T >
 struct read_result {
-	typedef std::function< read_result( T ... ) > read_callback_type;
-	boost::tribool		result;
-	read_callback_type	callback;
+    using read_callback_type = ::std::function< read_result( T... ) >;
+    boost::tribool        result;
+    read_callback_type    callback;
+
+    read_result(boost::tribool r, read_callback_type c);
+    read_result(read_result const&);
+    read_result(read_result&&);
 };
+
+template < typename ... T >
+read_result<T...>::read_result(boost::tribool r, read_callback_type c)
+    : result{ r }, callback{ c }
+{
+}
+template < typename ... T >
+read_result<T...>::read_result(read_result const& rhs)
+    : result{ rhs.result }, callback{ rhs.callback }
+{
+}
+
+template < typename ... T >
+read_result<T...>::read_result(read_result&& rhs)
+    : result{ ::std::move(rhs.result) }, callback{ ::std::move(rhs.callback) }
+{
+}
 
 }  // namespace util
 }  // namespace psst
