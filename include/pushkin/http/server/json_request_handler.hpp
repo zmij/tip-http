@@ -152,6 +152,13 @@ public:
     operator()(http::server::error const& e) const
     { error(e); }
 
+    void
+    client_error(response_status s = response_status::bad_request)
+    { r_.client_error(s); }
+    void
+    server_error(response_status s = response_status::internal_server_error)
+    { r_.server_error(s); }
+
     template < typename Context >
     friend bool
     has_context(json_reply const& r);
