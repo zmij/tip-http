@@ -34,15 +34,17 @@ class Writer {
 public:
 	typedef typename Encoding::Ch Ch;
 
-	Writer(Stream& stream, int precision = 20, Allocator* allocator = 0, size_t levelDepth = kDefaultLevelDepth) :
+	// @pushkin AWM-14057 there are 7 digits in UE4, so precision = 10
+	Writer(Stream& stream, int precision = 10, Allocator* allocator = 0, size_t levelDepth = kDefaultLevelDepth) :
 		stream_(stream), level_stack_(allocator, levelDepth * sizeof(Level))
   {
 #if _MSC_VER
     (void) sprintf_s(double_format, sizeof(double_format), "%%0.%dg", precision);
     (void) sprintf_s( long_double_format, sizeof( long_double_format ), "%%0.%dLg", precision );
 #else
-    (void) snprintf(double_format, sizeof(double_format), "%%0.%dg", precision);
-    (void) snprintf( long_double_format, sizeof( long_double_format ), "%%0.%dLg", precision );
+    // @pushkin AWM-14057
+    (void) snprintf(double_format, sizeof(double_format), "%%0.%df", precision);
+    (void) snprintf( long_double_format, sizeof( long_double_format ), "%%0.%dLf", precision );
 #endif
 
   }
