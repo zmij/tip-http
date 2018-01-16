@@ -19,6 +19,8 @@ namespace server {
 
 struct json_reply {
 public:
+    using io_service_ptr    = reply::io_service_ptr;
+public:
     explicit
     json_reply(reply r)
         : r_{r}, sent_{ ::std::make_shared< ::std::atomic_flag >(false) } {}
@@ -29,6 +31,10 @@ public:
     operator = (json_reply const&) = default;
     json_reply&
     operator = (json_reply&&) = default;
+
+    io_service_ptr
+    io_service() const
+    { return r_.io_service(); }
 
     tip::iri::path const&
     path() const
