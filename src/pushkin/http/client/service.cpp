@@ -63,7 +63,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
 
     void
     get(std::string const& url, response_callback on_done,
-            error_callback on_error, bool run_sync)
+            error_callback on_error, headers const& hdrs, bool run_sync)
     {
         request::iri_type iri;
         if (!request::parse_iri(url, iri)) {
@@ -75,34 +75,37 @@ struct service::impl : std::enable_shared_from_this<impl> {
                 } else throw;
             }
         }
-        send_request(GET, iri, session::body_type(), on_done, on_error, run_sync);
+        send_request(GET, iri, session::body_type(), on_done, on_error, hdrs, run_sync);
     }
     void
     post(std::string const& url, body_type const& body,
-            response_callback on_done, error_callback on_error, bool run_sync)
+            response_callback on_done, error_callback on_error,
+            headers const& hdrs, bool run_sync)
     {
         request::iri_type iri;
         if (!request::parse_iri(url, iri)) {
             return;
         }
-        send_request(POST, iri, body, on_done, on_error, run_sync);
+        send_request(POST, iri, body, on_done, on_error, hdrs, run_sync);
     }
     void
     post(std::string const& url, body_type&& body,
-            response_callback on_done, error_callback on_error, bool run_sync)
+            response_callback on_done, error_callback on_error,
+            headers const& hdrs, bool run_sync)
     {
         request::iri_type iri;
         if (!request::parse_iri(url, iri)) {
             return;
         }
-        send_request(POST, iri, std::move(body), on_done, on_error, run_sync);
+        send_request(POST, iri, std::move(body), on_done, on_error, hdrs, run_sync);
     }
 
     template < typename BodyType >
     void
     send_request(request_method method, request::iri_type const& iri,
             BodyType&& body,
-            response_callback on_done, error_callback on_error, bool run_sync)
+            response_callback on_done, error_callback on_error,
+            headers const& hdrs, bool run_sync)
     {
         using std::placeholders::_1;
         using std::placeholders::_2;
@@ -145,7 +148,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
             s->send_request(method, iri, ::std::forward<BodyType>(body),
                     std::bind(&impl::handle_response,
                             shared_from_this(), _1, _2,
-                            done_handler, err_handler), err_handler);
+                            done_handler, err_handler), err_handler, hdrs);
         } catch (...) {
             *done = true;
             if (on_error) {
@@ -296,25 +299,26 @@ service::shutdown_service()
 
 
 void
-service::get_async(std::string const& url, response_callback cb, error_callback eb, bool run_sync)
+service::get_async(std::string const& url, response_callback cb, error_callback eb,
+        headers const& hdrs, bool run_sync)
 {
-    pimpl_->get(url, cb, eb, run_sync);
+    pimpl_->get(url, cb, eb, hdrs, run_sync);
 }
 
 
 void
-service::post(::std::string const& url, body_type const& body,
-        response_callback cb, error_callback eb, bool run_sync)
+service::post_async(::std::string const& url, body_type const& body,
+        response_callback cb, error_callback eb, headers const& hdrs, bool run_sync)
 {
-    pimpl_->post(url, body, cb, eb, run_sync);
+    pimpl_->post(url, body, cb, eb, hdrs, run_sync);
 }
 
 void
-service::post(std::string const& url, ::std::string const& body_str,
-        response_callback cb, error_callback eb, bool run_sync)
+service::post_async(std::string const& url, ::std::string const& body_str,
+        response_callback cb, error_callback eb, headers const& hdrs, bool run_sync)
 {
     body_type body{ body_str.begin(), body_str.end() };
-    pimpl_->post(url, ::std::move(body), cb, eb, run_sync);
+    pimpl_->post(url, ::std::move(body), cb, eb, hdrs, run_sync);
 }
 
 } /* namespace client */

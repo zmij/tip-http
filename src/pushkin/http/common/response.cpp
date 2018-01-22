@@ -248,6 +248,20 @@ response::add_cookie(cookie const& c)
 	add_header( {SetCookie, os.str()} );
 }
 
+response::header_values
+response::get_header(header_name name) const
+{
+    header_values res;
+    auto range = headers_.equal_range(name);
+    ::std::transform(
+        range.first, range.second, ::std::back_inserter(res),
+        [](headers::value_type const& v)
+        {
+            return v.second;
+        });
+    return res;
+}
+
 void
 response::get_cookies(cookies& cookie_container)
 {

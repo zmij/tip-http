@@ -43,11 +43,11 @@ public:
     operator = (session const&) = delete;
 
     void
-    send_request(request_method method, request::iri_type const&,
-            body_type const&, response_callback cb, error_callback ecb);
+    send_request(request_method method, request::iri_type const&, body_type const&,
+            response_callback cb, error_callback ecb, headers const& = headers{});
     void
-    send_request(request_method method, request::iri_type const&,
-            body_type&&, response_callback cb, error_callback ecb);
+    send_request(request_method method, request::iri_type const&, body_type&&,
+            response_callback cb, error_callback ecb, headers const& = headers{});
     void
     send_request(request_ptr req, response_callback cb, error_callback ecb);
 

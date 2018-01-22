@@ -46,15 +46,15 @@ public:
 
     template < template < typename > class _Promise = ::std::promise >
     response_ptr
-    get(::std::string const& url)
+    get(::std::string const& url, headers const& hdrs = headers{})
     {
-        auto future = get_async<_Promise>(url, false);
+        auto future = get_async<_Promise>(url, hdrs, true);
         return future.get();
     }
 
     template < template < typename > class _Promise = ::std::promise >
     auto
-    get_async(::std::string const& url, bool run_sync)
+    get_async(::std::string const& url, headers const& hdrs, bool run_sync)
         -> decltype( ::std::declval< _Promise< response_ptr > >().get_future() )
     {
         auto promise = ::std::make_shared< _Promise< response_ptr > >();
@@ -66,35 +66,38 @@ public:
         [promise](::std::exception_ptr ex)
         {
             promise->set_exception(::std::move(ex));
-        }, run_sync);
+        }, hdrs, run_sync);
 
         return promise->get_future();
     }
     void
     get_async(::std::string const& url, response_callback,
-            error_callback = nullptr, bool run_sync = false);
+            error_callback = nullptr, headers const& = headers{}, bool run_sync = false);
 
     void
-    post(::std::string const& url, body_type const& body, response_callback,
-            error_callback = nullptr, bool run_sync = false);
+    post_async(::std::string const& url, body_type const& body,
+            response_callback, error_callback = nullptr,
+            headers const& = headers{}, bool run_sync = false);
 
     void
-    post(::std::string const& url, body_type&& body, response_callback,
-            error_callback = nullptr, bool run_sync = false);
+    post_async(::std::string const& url, body_type&& body,
+            response_callback, error_callback = nullptr,
+            headers const& = headers{}, bool run_sync = false);
 
 
     void
-    post(::std::string const& url, ::std::string const& body, response_callback,
-            error_callback = nullptr, bool run_sync = false);
+    post_async(::std::string const& url, ::std::string const& body,
+            response_callback, error_callback = nullptr,
+            headers const& = headers{}, bool run_sync = false);
 
 
     template < typename Body, template < typename > class _Promise = ::std::promise >
     auto
-    post_async(::std::string const& url, Body&& body, bool run_sync)
+    post_async(::std::string const& url, Body&& body, headers const& hdrs, bool run_sync)
         -> decltype( ::std::declval< _Promise< response_ptr > >().get_future() )
     {
         auto promise = ::std::make_shared< _Promise< response_ptr > >();
-        post(url, ::std::forward<Body>(body),
+        post_async(url, ::std::forward<Body>(body),
         [promise](response_ptr resp)
         {
             promise->set_value(resp);
@@ -102,15 +105,15 @@ public:
         [promise](::std::exception_ptr ex)
         {
             promise->set_exception(::std::move(ex));
-        }, run_sync);
+        }, hdrs, run_sync);
 
         return promise->get_future();
     }
     template < typename Body, template < typename > class _Promise = ::std::promise >
     response_ptr
-    post(::std::string const& url, Body&& body)
+    post(::std::string const& url, Body&& body, headers const& hdrs = headers{} )
     {
-        auto future = post_async<Body, _Promise>(url, ::std::forward<Body>(body), false);
+        auto future = post_async<Body, _Promise>(url, ::std::forward<Body>(body), hdrs, true);
         return future.get();
     }
 private:

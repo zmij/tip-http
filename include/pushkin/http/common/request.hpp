@@ -94,22 +94,24 @@ public:
     tip::iri::host
     host() const;
 
+    //@{
+    /** @name Read incoming request */
     bool
     read_headers(std::istream&);
-
     read_result_type
     read_body(std::istream&);
+    //@}
 public:
     static request_ptr
     create(request_method method, iri_type const& iri,
-            body_type const& body = body_type());
+            body_type const& body = body_type(), headers const& = headers{});
 
     static request_ptr
     create(request_method method, iri_type const& iri,
-            body_type&& body);
+            body_type&& body, headers const& = headers{});
 
     static request_ptr
-    create(request_method method, std::string const& iri_str);
+    create(request_method method, std::string const& iri_str, headers const& = headers{});
 
     static bool
     parse_iri(std::string const&, iri_type&);

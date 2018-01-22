@@ -189,8 +189,21 @@ operator << (std::ostream& os, request const& val)
 
 
 request_ptr
-request::create(request_method method, iri_type const& iri, body_type const& body)
+request::create(request_method method, iri_type const& iri, body_type const& body,
+        headers const& hdrs)
 {
+    if (!hdrs.empty()) {
+        headers req_hdrs{hdrs};
+        if (!req_hdrs.count(Host)) {
+            req_hdrs.insert({ Host, iri.authority.host });
+        }
+        return request_ptr(new request{
+            method,
+            iri.path, iri.query, iri.fragment,
+            ::std::move(req_hdrs),
+            body
+        });
+    }
     return request_ptr(new request{
         method,
         iri.path, iri.query, iri.fragment,
@@ -202,25 +215,38 @@ request::create(request_method method, iri_type const& iri, body_type const& bod
 }
 
 request_ptr
-request::create(request_method method, iri_type const& iri, body_type&& body)
+request::create(request_method method, iri_type const& iri, body_type&& body,
+        headers const& hdrs)
 {
+    if (!hdrs.empty()) {
+        headers req_hdrs{hdrs};
+        if (!req_hdrs.count(Host)) {
+            req_hdrs.insert({ Host, iri.authority.host });
+        }
+        return request_ptr(new request{
+            method,
+            iri.path, iri.query, iri.fragment,
+            ::std::move(req_hdrs),
+            ::std::move(body)
+        });
+    }
     return request_ptr(new request{
         method,
         iri.path, iri.query, iri.fragment,
         headers {
             { Host, iri.authority.host }
         },
-        std::move(body)
+        ::std::move(body)
     });
 }
 
 
 request_ptr
-request::create(request_method method, std::string const& iri_str)
+request::create(request_method method, std::string const& iri_str, headers const& hdrs)
 {
     iri_type iri;
     if (parse_iri(iri_str, iri))
-        return create(method, iri);
+        return create(method, iri, body_type{}, hdrs);
     return request_ptr(); // TODO throw an exception?
 }
 

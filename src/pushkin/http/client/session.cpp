@@ -706,16 +706,16 @@ session::~session()
 
 void
 session::send_request(request_method method, request::iri_type const& iri,
-        body_type const& body, response_callback cb, error_callback ecb)
+        body_type const& body, response_callback cb, error_callback ecb, headers const& hdrs)
 {
-    do_send_request( request::create(method, iri, body), cb, ecb);
+    do_send_request( request::create(method, iri, body, hdrs), cb, ecb);
 }
 
 void
 session::send_request(request_method method, request::iri_type const& iri,
-        body_type&& body, response_callback cb, error_callback ecb)
+        body_type&& body, response_callback cb, error_callback ecb, headers const& hdrs)
 {
-    do_send_request( request::create(method, iri, std::move(body)), cb, ecb);
+    do_send_request( request::create(method, iri, std::move(body), hdrs), cb, ecb);
 }
 
 void

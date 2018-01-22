@@ -26,18 +26,19 @@ struct cookie;
 typedef std::vector<cookie> cookies;
 
 struct response {
-    typedef std::pair< std::int32_t, std::int32_t >    version_type;
-    typedef std::vector<char>                        body_type;
+    using version_type                  = ::std::pair< ::std::int32_t, ::std::int32_t >;
+    using body_type                     = ::std::vector<char>;
+    using read_result_type              = util::read_result< ::std::istream& >;
+    using read_callback                 = read_result_type::read_callback_type;
 
-    using read_result_type            = util::read_result< ::std::istream& >;
-    using read_callback               = read_result_type::read_callback_type;
+    using header_values                 = ::std::vector<::std::string>;
 
-    version_type                    version;
-    response_status                    status;
-    std::string                        status_line;
-    headers                            headers_;
+    version_type                        version;
+    response_status                     status;
+    std::string                         status_line;
+    headers                             headers_;
 
-    body_type                        body_;
+    body_type                           body_;
 
     bool
     operator == (response const&) const;
@@ -68,6 +69,9 @@ struct response {
     add_header(header const&);
     void
     add_header(header &&);
+
+    header_values
+    get_header(header_name) const;
 
     void
     add_cookie(cookie const&);
