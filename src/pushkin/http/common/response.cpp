@@ -149,10 +149,7 @@ response::read_body_content_length(std::istream& is, size_t remain)
 	std::istream_iterator<char> f(is);
 	std::istream_iterator<char> l;
 	size_t consumed = util::copy_max(f, l, remain, std::back_inserter(body_));
-	if (consumed == 0) {
-		// Failed to read anything
-		return read_result_type{false, read_callback()};
-	}
+
 	if (consumed == remain) {
 		// Don't need more data
 		return read_result_type{true, read_callback()};
