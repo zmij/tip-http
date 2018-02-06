@@ -25,6 +25,7 @@ target_link_libraries(
     ${HTTP_CLIENT_LIB}
     ${Boost_SYSTEM_LIBRARIES}
     ${Boost_THREAD_LIBRARIES}
+    ${TBB_LIBRARY}
     ${TIP_LOG_LIB}
     ${HTTP_COMMON_LIB}
     ${TIP_SSLCONTEXT_LIB}

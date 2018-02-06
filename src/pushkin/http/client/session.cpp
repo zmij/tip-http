@@ -416,7 +416,8 @@ struct session_fsm_def :
         strand_{io_service},
         transport_{io_service},
         host_{iri.authority.host}, scheme_{iri.scheme},
-        default_headers_{default_headers}, on_idle_(on_idle), on_close_{on_close},
+        default_headers_{default_headers},
+        on_idle_(on_idle), on_close_{on_close},
         req_count_{0}
     {
     }
@@ -666,7 +667,8 @@ public:
     session_impl(io_service& io_service, request::iri_type const& iri,
             session_callback on_idle, session_error on_close,
             headers const& default_headers) :
-        base_type(std::ref(io_service), iri, on_idle, on_close, default_headers)
+        base_type(std::ref(io_service), iri, on_idle, on_close, default_headers),
+        id_{ session::create_connection_id(iri) }
     {
         this->make_observer();
     }
@@ -674,6 +676,12 @@ public:
     virtual ~session_impl()
     {
         local_log() << "session_impl::~session_impl";
+    }
+
+    connection_id
+    id() const override
+    {
+        return id_;
     }
 
     void
@@ -693,6 +701,8 @@ public:
     {
         return base_type::req_count_;
     }
+
+    connection_id id_;
 };
 
 //----------------------------------------------------------------------------

@@ -60,6 +60,7 @@ set(BOOST_COMPONENTS
 
 find_package(Boost 1.58 COMPONENTS ${BOOST_COMPONENTS} REQUIRED)
 find_package(Threads REQUIRED)
+find_package(TBB REQUIRED)
 
 set(HTTP_COMMON_LIB ${PROJECT_PREFIX}-http-common)
 set(HTTP_CLIENT_LIB ${PROJECT_PREFIX}-http-client)
@@ -78,9 +79,13 @@ endif()
 set(CEREAL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/cereal/include)
 
 # FIXME Locate pushkin/l10n library
+include_directories(
+    SYSTEM
+    ${Boost_INCLUDE_DIR}
+    ${TBB_INCLUDE_DIRS}
+)
 
 include_directories(
-    ${Boost_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}/include
@@ -88,6 +93,7 @@ include_directories(
     ${TIP_LOG_INCLUDE_DIRS}
     ${TIP_SSL_INCLUDE_DIRS}
     ${TIP_UTIL_INCLUDE_DIRS}
+    ${TIP_LRU_INCLUDE_DIRS}
     ${PUSHKIN_L10N_INCLUDE_DIRS}
     ${CEREAL_INCLUDE_DIR}
     ${AFSM_INCLUDE_DIRS} # TODO Add search script / sublibrary

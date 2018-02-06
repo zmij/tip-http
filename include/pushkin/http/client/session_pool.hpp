@@ -35,6 +35,9 @@ public:
 public:
     virtual ~session_pool() {}
 
+    connection_id
+    id() const override;
+
     static pool_ptr
     create(io_service& svc, request::iri_type const& iri,
             session_callback on_close, headers const& default_headers,
@@ -47,35 +50,14 @@ private:
     do_send_request(request_ptr req, response_callback cb, error_callback) override;
 
     void
-    send_with_retries(request_ptr req, int retry_count, response_callback cb, error_callback ecb);
-
-    void
     do_close() override;
 
     ::std::size_t
     get_request_count() const override;
 private:
-    session_ptr
-    start_session();
-    void
-    session_idle(session_ptr);
-    void
-    session_closed(session_ptr, ::std::exception_ptr);
-private:
-    io_service&             svc_;
-    request::iri_type       iri_;
-    headers                 default_headers_;
-    ::std::size_t           max_sessions_;
-
-    mutex_type              mtx_;
-
-    ::std::atomic<bool >    closed_;
-    session_callback        on_close_;
-
-    session_container       sessions_;
-    session_queue           idle_sessions_;
-
-    request_queue           requests_;
+    struct impl;
+    using pimpl = ::std::shared_ptr<impl>;
+    pimpl pimpl_;
 };
 
 }  // namespace client

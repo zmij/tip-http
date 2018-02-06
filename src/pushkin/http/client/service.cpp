@@ -17,6 +17,46 @@
 #include <pushkin/http/client/session_pool.hpp>
 #include <pushkin/http/common/response.hpp>
 
+#include <tip/lru-cache/lru_cache_service.hpp>
+
+//namespace tip {
+//namespace iri {
+//
+//inline size_t
+//tbb_hasher(host const& h) {
+//    return ::std::hash<::std::string>{}(h);
+//}
+//
+//
+//} /* namespace iri */
+//} /* namespace tip */
+
+namespace std {
+
+template <>
+struct hash< ::tip::iri::host > {
+    ::std::size_t
+    operator()(::tip::iri::host const& h) const noexcept
+    {
+        return ::std::hash<::std::string>{}(h);
+    }
+};
+
+template <>
+struct hash< pair< ::tip::iri::host, string > > {
+    using value_type = pair< ::tip::iri::host, string >;
+    ::std::size_t
+    operator()(value_type const& v) const noexcept
+    {
+        hash<::std::string> s_hash;
+        return (s_hash(v.first) << 1) | s_hash(v.second);
+    }
+
+};
+
+} /* namespace std */
+
+
 namespace psst {
 namespace http {
 namespace client {
@@ -36,8 +76,8 @@ const std::set< ::tip::iri::scheme > SUPPORTED_SCHEMES { HTTP_SCHEME, HTTPS_SCHE
 
 struct service::impl : std::enable_shared_from_this<impl> {
     using connection_id     = session::connection_id;
-    // TODO multiple sessions per host
-    using session_container = ::std::map< connection_id, session_ptr >;
+    using session_lru       = ::tip::lru::lru_cache_service<session_ptr, connection_id>;
+
     using mutex_type        = ::std::mutex;
     using lock_type         = ::std::lock_guard< mutex_type >;
 
@@ -45,7 +85,7 @@ struct service::impl : std::enable_shared_from_this<impl> {
 
     io_service&                     owner_;
     headers                         default_headers_;
-    session_container               sessions_;
+    //session_container               sessions_;
     mutex_type                      mtx_;
 
     ::std::atomic<::std::size_t>    max_sessions_;
@@ -54,6 +94,10 @@ struct service::impl : std::enable_shared_from_this<impl> {
         owner_(owner), default_headers_(default_headers),
         max_sessions_{ DEFAULT_MAX_SESSIONS }
     {
+        auto timeout    = ::boost::posix_time::minutes{60};
+        auto cleanup    = ::boost::posix_time::seconds{60};
+
+        ::boost::asio::add_service(owner_, new session_lru( owner_, cleanup, timeout ));
     }
 
     ~impl()
@@ -178,13 +222,13 @@ struct service::impl : std::enable_shared_from_this<impl> {
         }
         connection_id cid = session::create_connection_id(iri);
 
-        lock_type lock(mtx_);
-        auto f = sessions_.find(cid);
-        if (f == sessions_.end()) {
-            session_ptr s = create_session(iri);
-            f = sessions_.insert(std::make_pair(cid, s)).first;
+        auto& lru = ::boost::asio::use_service<session_lru>(owner_);
+        session_ptr s;
+        if (!lru.get(cid, s)) {
+            s = create_session(iri);
+            lru.put(cid, s);
         }
-        return f->second;
+        return s;
     }
 
     session_ptr
@@ -246,25 +290,17 @@ struct service::impl : std::enable_shared_from_this<impl> {
     void
     session_closed(session_ptr s)
     {
-        lock_type lock(mtx_);
-        local_log() << "Session closed";
-        session_container::const_iterator p = sessions_.begin();
-        for (; p != sessions_.end(); ++p) {
-            if (p->second == s) break;
-        }
-        if (p != sessions_.end()) {
-            sessions_.erase(p);
+        if (s) {
+            auto id = s->id();
+            local_log() << "Session closed " << id.first;
+            auto& lru = ::boost::asio::use_service<session_lru>(owner_);
+            lru.erase(id);
         }
     }
 
     void
     shutdown()
     {
-        session_container save = sessions_;
-        for (session_container::const_iterator p = save.begin();
-                p != save.end(); ++p) {
-            p->second->close();
-        }
     }
 };
 

@@ -58,6 +58,9 @@ public:
     ::std::size_t
     request_count() const;
 
+    virtual connection_id
+    id() const = 0;
+
     void
     close();
 
