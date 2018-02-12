@@ -506,15 +506,30 @@ struct session_fsm_def :
     {
         if (!ec) {
             // Parse response head
-            ::std::istream is(&incoming_);
+            ::std::istream orig(&incoming_);
+            // Copy buffer for debugging google problem
+            // FIXME Remove after use
+            orig.unsetf(orig.skipws);
+            ::std::ostringstream os;
+            ::std::copy(
+                ::std::istream_iterator<char>(orig),
+                ::std::istream_iterator<char>(),
+                ::std::ostream_iterator<char>(os)
+            );
+            ::std::istringstream is(os.str());
+            // End remove
+            // ::std::istream is(&incoming_);
+
             response_ptr resp(std::make_shared< response >());
             if (resp->read_headers(is)) {
                 read_body(resp, resp->read_body(is));
             } else {
+                local_log() << "Current input position " << is.tellg();
                 is.seekg(0, is.beg);
 
-                local_log(logger::ERROR) << "Failed to parse response head. Response size " << num
-                        << " contents:\n" << ::psst::log::istream{ is };
+                local_log(logger::ERROR) << "Failed to parse response head. Buffer size: " << num
+                        << " contents:\n" << ::psst::log::istream{ is }
+                        << "\nRESPONSE END";
                 fsm().process_event(events::transport_error{
                     ::std::make_exception_ptr(errors::connection_broken{"Failed to parse response head"})
                 });
