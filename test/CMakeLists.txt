@@ -132,3 +132,14 @@ add_test(
     COMMAND test-http-server ${TEST_SERVER_OUT_ARGS}
 )
 
+add_executable(psst-get psst_get.cpp)
+target_link_libraries(
+    psst-get
+    ${Boost_PROGRAM_OPTIONS_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${TIP_LOG_LIB}
+    ${TIP_IRI_LIB}
+    ${HTTP_CLIENT_LIB}
+)
+
+
