@@ -502,16 +502,22 @@ struct session_fsm_def :
 
     // TODO Delegate this to protocol
     void
-    handle_read_headers(error_code const& ec, size_t)
+    handle_read_headers(error_code const& ec, size_t num)
     {
         if (!ec) {
             // Parse response head
-            std::istream is(&incoming_);
+            ::std::istream is(&incoming_);
             response_ptr resp(std::make_shared< response >());
             if (resp->read_headers(is)) {
                 read_body(resp, resp->read_body(is));
             } else {
-                local_log(logger::ERROR) << "Failed to parse response headers";
+                is.seekg(0, is.beg);
+
+                local_log(logger::ERROR) << "Failed to parse response head. Response size " << num
+                        << " contents:\n" << ::psst::log::istream{ is };
+                fsm().process_event(events::transport_error{
+                    ::std::make_exception_ptr(errors::connection_broken{"Failed to parse response head"})
+                });
             }
         } else {
             local_log(logger::DEBUG) << "Request to " << scheme_ << "://" << host_
