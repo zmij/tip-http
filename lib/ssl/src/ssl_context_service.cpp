@@ -38,6 +38,12 @@ struct ssl_context_service::impl {
 			}
 		}
 	}
+
+	void
+	load_default_verify_path()
+	{
+	    context_.set_default_verify_paths();
+	}
 };
 
 ssl_context_service::ssl_context_service(io_service& svc) : base_type(svc), pimpl_(new impl)
@@ -64,6 +70,12 @@ void
 ssl_context_service::load_verify_files(path_type const& p)
 {
 	pimpl_->load_verify_files(p);
+}
+
+void
+ssl_context_service::load_default_verify_path()
+{
+    pimpl_->load_default_verify_path();
 }
 
 void

@@ -11,6 +11,8 @@
 
 #include <pushkin/http/client/service.hpp>
 #include <pushkin/http/common/response.hpp>
+#include <tip/ssl_context_service.hpp>
+
 #include <pushkin/log.hpp>
 
 LOCAL_LOGGING_FACILITY(PSSTGET, TRACE);
@@ -21,6 +23,8 @@ try {
     namespace po = ::boost::program_options;
     using http_service = ::psst::http::client::service;
     using http_response_ptr = ::psst::http::response_ptr;
+    using ssl_service  = ::tip::ssl::ssl_context_service;
+    using ::boost::asio::use_service;
 
     logger::set_proc_name(argv[0]);
     logger::set_stream(::std::clog);
@@ -45,7 +49,9 @@ try {
     po::notify(vm);
 
     ::boost::asio::io_service svc;
-    auto& http = ::boost::asio::use_service< http_service >(svc);
+    auto& http = use_service< http_service >(svc);
+    auto& ssl  = use_service< ssl_service >(svc);
+    ssl.load_default_verify_path();
 
     http.get_async(url,
     [&]( http_response_ptr r )

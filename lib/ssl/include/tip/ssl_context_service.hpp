@@ -49,6 +49,9 @@ public:
 
     void
     load_verify_files(path_type const& directory);
+
+    void
+    load_default_verify_path();
 private:
     virtual void
     shutdown_service();
