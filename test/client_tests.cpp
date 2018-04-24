@@ -47,7 +47,7 @@ TEST(HttpClient, Session)
 {
     boost::asio::io_service io_service;
     request::iri_type iri;
-    ASSERT_TRUE(request::parse_iri("http://google.com/", iri));
+    ASSERT_TRUE(request::parse_iri("http://mail.ru/", iri));
 
     bool session_closed = false;
     response_ptr resp;
@@ -87,7 +87,7 @@ TEST(HttpClient, SessionPool)
 {
     boost::asio::io_service io_service;
     request::iri_type iri;
-    ASSERT_TRUE(request::parse_iri("http://google.com/", iri));
+    ASSERT_TRUE(request::parse_iri("http://mail.ru/", iri));
 
     auto pool = session_pool::create(io_service, iri,
     [](session_ptr s){
@@ -110,7 +110,7 @@ TEST(HttpClient, GetRequest)
     http_service& svc = boost::asio::use_service< http_service >(io_service);
     response_ptr resp;
     bool error = false;
-    svc.get_async("http://google.com/",
+    svc.get_async("http://neverssl.com/",
     [&](response_ptr r){
         local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size();
@@ -205,7 +205,7 @@ TEST(HttpsClient, VerifyCertOK)
     EXPECT_FALSE(error);
 }
 
-TEST(HttpsClient, GetAppleCert)
+TEST(HttpsClient, DISABLED_GetAppleCert)
 {
     using http_service = service;
     using ssl_service = tip::ssl::ssl_context_service;
