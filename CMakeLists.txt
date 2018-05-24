@@ -1,7 +1,7 @@
-#	CMakeLists.txt
-#	
-#	@author zmij
-#	@date Dec 7, 2015
+#    CMakeLists.txt
+#
+#    @author zmij
+#    @date Dec 7, 2015
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -29,6 +29,13 @@ endif()
 if(NOT TIP_UTIL_INCLUDE_DIRS)
     set(TIP_UTIL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/include)
 endif()
+if(NOT AFSM_INCLUDE_DIRS)
+    set(AFSM_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/lib/afsm/include)
+endif()
+if (NOT METAPUSHKIN_FOUND)
+    add_subdirectory(lib/afsm/lib/meta)
+endif()
+
 
 if (NOT TIP_IRI_LIB)
     set(TIP_IRI_LIB tip-iri)
@@ -71,9 +78,11 @@ add_subdirectory(data)
 add_subdirectory(lib/ssl)
 if(_TIP_LOG_SUBTREE)
     add_subdirectory(lib/log)
+    set(_TIP_LOG_SUBTREE ${_TIP_LOG_SUBTREE} CACHE INTERNAL "Include tip-log as subtree")
 endif()
 if(_TIP_IRI_SUBTREE)
     add_subdirectory(lib/iri)
+    set(_TIP_IRI_SUBTREE ${_TIP_IRI_SUBTREE} CACHE INTERNAL "Include tip-log as subtree")
 endif()
 
 set(CEREAL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/cereal/include)
@@ -89,6 +98,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}/include
+    ${AFSM_INCLUDE_DIRS}
+    ${METAPUSHKIN_INCLUDE_DIRS}
     ${TIP_IRI_INCLUDE_DIRS}
     ${TIP_LOG_INCLUDE_DIRS}
     ${TIP_SSL_INCLUDE_DIRS}
@@ -116,7 +127,7 @@ if (has_parent)
     set(TIP_HTTP_SERVER_LIB ${HTTP_SERVER_LIB} CACHE INTERNAL "HTTP server library target name")
     set(CEREAL_INCLUDE_DIR ${CEREAL_INCLUDE_DIR} CACHE INTERNAL "Cereal include directories")
     set(
-        TIP_HTTP_INCLUDE_DIRS 
+        TIP_HTTP_INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${CEREAL_INCLUDE_DIR}

@@ -22,7 +22,7 @@ LOCAL_LOGGING_FACILITY(CLIENTTEST, TRACE);
 
 TEST(HttpClient, ServiceGet)
 {
-    boost::asio::io_service io_service;
+	boost::asio::io_service io_service;
     ASSERT_NO_THROW( boost::asio::use_service< service >(io_service) );
 }
 
@@ -106,74 +106,74 @@ TEST(HttpClient, SessionPool)
 TEST(HttpClient, GetRequest)
 {
     using http_service = service;
-    boost::asio::io_service io_service;
-    http_service& svc = boost::asio::use_service< http_service >(io_service);
-    response_ptr resp;
-    bool error = false;
+	boost::asio::io_service io_service;
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
+	response_ptr resp;
+	bool error = false;
     svc.get_async("http://neverssl.com/",
-    [&](response_ptr r){
-        local_log() << "Received a response: Content-Length: "
-                << r->content_length() << " body size " << r->body_.size();
-        resp = r;
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
+				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
         io_service.stop();
-    },
-    [&](std::exception_ptr) {
-        error = true;
+	},
+	[&](std::exception_ptr) {
+		error = true;
         io_service.stop();
-    });
-    io_service.run();
-    EXPECT_FALSE(error);
-    ASSERT_TRUE(resp.get());
-    EXPECT_LT(0, resp->body_.size());
+	});
+	io_service.run();
+	EXPECT_FALSE(error);
+	ASSERT_TRUE(resp.get());
+	EXPECT_LT(0, resp->body_.size());
 }
 
 TEST(HttpClient, FailConnecting)
 {
     using http_service = service;
-    boost::asio::io_service io_service;
-    http_service& svc = boost::asio::use_service< http_service >(io_service);
-    response_ptr resp;
-    bool error = false;
+	boost::asio::io_service io_service;
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
+	response_ptr resp;
+	bool error = false;
     for (int i = 0; i < 10; ++i) {
         svc.get_async("http://127.0.0.1:65535/",
-        [&](response_ptr r){
-            local_log() << "Received a response: Content-Length: "
-                    << r->content_length() << " body size " << r->body_.size();
-            resp = r;
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
+				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
             io_service.stop();
-        },
-        [&](std::exception_ptr) {
-            error = true;
+	},
+	[&](std::exception_ptr) {
+			error = true;
             io_service.stop();
-        });
+	});
     }
-    io_service.run();
-    EXPECT_FALSE(resp.get());
-    EXPECT_TRUE(error);
+	io_service.run();
+	EXPECT_FALSE(resp.get());
+	EXPECT_TRUE(error);
 }
 
 TEST(HttpsClient, FailVerifyCert)
 {
     using http_service = psst::http::client::service;
     using psst::http::response_ptr;
-    boost::asio::io_service io_service;
-    http_service& svc = boost::asio::use_service< http_service >(io_service);
-    response_ptr resp;
-    bool error = false;
+	boost::asio::io_service io_service;
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
+	response_ptr resp;
+	bool error = false;
     svc.get_async("https://mail.ru/",
-    [&](response_ptr r){
-        local_log() << "Received a response: Content-Length: "
-                << r->content_length() << " body size " << r->body_.size();
-        resp = r;
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
+				<< r->content_length() << " body size " << r->body_.size();
+		resp = r;
         io_service.stop();
-    },
-    [&](std::exception_ptr) {
-        error = true;
+	},
+	[&](std::exception_ptr) {
+			error = true;
         io_service.stop();
-    });
-    io_service.run();
-    EXPECT_FALSE(resp.get());
-    EXPECT_TRUE(error);
+	});
+	io_service.run();
+	EXPECT_FALSE(resp.get());
+	EXPECT_TRUE(error);
 }
 
 TEST(HttpsClient, VerifyCertOK)
@@ -210,29 +210,29 @@ TEST(HttpsClient, DISABLED_GetAppleCert)
     using http_service = service;
     using ssl_service = tip::ssl::ssl_context_service;
 
-    boost::asio::io_service io_service;
-    ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(io_service);
-    ssl_svc.context().set_default_verify_paths();
-    http_service& svc = boost::asio::use_service< http_service >(io_service);
+	boost::asio::io_service io_service;
+	ssl_service& ssl_svc = boost::asio::use_service< ssl_service >(io_service);
+	ssl_svc.context().set_default_verify_paths();
+	http_service& svc = boost::asio::use_service< http_service >(io_service);
 
-    response_ptr resp;
-    bool error = false;
+	response_ptr resp;
+	bool error = false;
     svc.get_async("https://static.gc.apple.com/public-key/ggc-prod-2.cer",
-    [&](response_ptr r){
-        local_log() << "Received a response: Content-Length: "
+	[&](response_ptr r){
+		local_log() << "Received a response: Content-Length: "
                 << r->content_length() << " body size " << r->body_.size()
                 << "\nHeaders\n"
                 << r->headers_;
-        resp = r;
+		resp = r;
         io_service.stop();
-    },
-    [&](std::exception_ptr) {
-        error = true;
+	},
+	[&](std::exception_ptr) {
+			error = true;
         io_service.stop();
-    });
-    io_service.run();
-    EXPECT_TRUE(resp.get());
-    EXPECT_FALSE(error);
+	});
+	io_service.run();
+	EXPECT_TRUE(resp.get());
+	EXPECT_FALSE(error);
 }
 
 }  // namespace test
