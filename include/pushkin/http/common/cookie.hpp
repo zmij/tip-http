@@ -39,7 +39,7 @@ struct cookie {
 
 struct cookie_name_cmp {
 	bool
-	operator()(cookie const& lhs, cookie const& rhs)
+	operator()(cookie const& lhs, cookie const& rhs) const
 	{
 		return lhs.name < rhs.name;
 	}
