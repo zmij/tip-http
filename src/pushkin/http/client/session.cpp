@@ -112,6 +112,10 @@ struct ssl_transport {
     void
     connect(session::connection_id const& conn_id, connect_callback cb)
     {
+        auto res = ::SSL_set_tlsext_host_name(socket_.native_handle(), conn_id.first.c_str());
+        if (res != 1) {
+            throw ::std::runtime_error{"Failed to set host name for the TLS SNI"};
+        }
         tcp::resolver::query
             qry(static_cast<std::string const&>(conn_id.first), conn_id.second);
         resolver_.async_resolve(qry, std::bind(
