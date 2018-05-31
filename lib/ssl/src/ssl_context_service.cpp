@@ -11,13 +11,32 @@
 namespace tip {
 namespace ssl {
 
+namespace {
+
+char const* const TLS_CIPHER_LIST =
+        "HIGH:!aNULL:!eNULL:!kECDH:!DSS:!MD5:!EXP:!PSK:!SRP:!CAMELLIA:!SEED:@STRENGTH";
+
+} /* namespace  */
+
+
 ssl_context_service::io_service::id ssl_context_service::id;
 
 struct ssl_context_service::impl {
 	context_type context_;
 
-	impl() : context_(context_type::sslv23)
+	impl() : context_(context_type::tlsv12)
 	{
+	    using ssl_context       = ::boost::asio::ssl::context;
+	    auto res = ::SSL_CTX_set_cipher_list(context_.native_handle(), TLS_CIPHER_LIST);
+	    if (res != 1) {
+	        throw ::std::runtime_error{"Failed to set TLS cipher list"};
+	    }
+	    context_.set_options(
+            ssl_context::default_workarounds |
+            ssl_context::no_sslv2 |
+            ssl_context::no_sslv3 |
+            ssl_context::single_dh_use
+        );
 	}
 
 	void

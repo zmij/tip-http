@@ -92,6 +92,7 @@ include_directories(
     SYSTEM
     ${Boost_INCLUDE_DIR}
     ${TBB_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
 )
 
 include_directories(
