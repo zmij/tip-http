@@ -91,7 +91,7 @@ namespace cereal
       that the container is variable sized and may be edited.
 
       \ingroup Archives */
-  class JSONOutputArchive : public OutputArchive<JSONOutputArchive>, public traits::TextArchive
+  class JSONOutputArchive final : public OutputArchive<JSONOutputArchive>, public traits::TextArchive
   {
     enum class NodeType { StartObject, InObject, StartArray, InArray };
 
@@ -413,7 +413,7 @@ namespace cereal
       @endcode
 
       \ingroup Archives */
-  class JSONInputArchive : public InputArchive<JSONInputArchive>, public traits::TextArchive
+  class JSONInputArchive final : public InputArchive<JSONInputArchive>, public traits::TextArchive
   {
     private:
       typedef rapidjson::GenericReadStream ReadStream;
